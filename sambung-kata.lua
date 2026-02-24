@@ -1,36 +1,37 @@
 -- =========================================================
--- ULTRA SMART AUTO KATA (HUMANIZED EDITION) - FIXED VERSION
+-- ULTRA SMART AUTO KATA (ANDROID SAFE EDITION)
 -- =========================================================
 
--- Load Orion Library dengan penanganan error yang lebih baik
-local OrionLib = (function()
-    local url = "https://raw.githubusercontent.com/jensonhirst/Orion/main/source"
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(url))()
-    end)
-    if success and result then
-        return result
-    else
-        warn("Gagal memuat Orion Library:", result)
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Error",
-            Text = "Gagal memuat Orion Library.\nCek koneksi atau URL.",
-            Duration = 5
-        })
-        return nil
-    end
-end)()
+-- ================================
+-- MOBILE FIX DETECTION
+-- ================================
+local UIS = game:GetService("UserInputService")
+if UIS.TouchEnabled then
+    getgenv().OrionTouchFix = true
+end
 
--- Jika gagal, hentikan eksekusi
+-- ================================
+-- LOAD ORION (OFFICIAL VERSION)
+-- ================================
+local OrionLib = loadstring(game:HttpGet(
+"https://raw.githubusercontent.com/shlexware/Orion/main/source"
+))()
+
 if not OrionLib then
+    warn("Orion gagal dimuat")
     return
 end
 
+-- ================================
+-- SERVICES
+-- ================================
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Pastikan WordList dan IndonesianWords ada
+-- ================================
+-- LOAD MODULE
+-- ================================
 local wordList = ReplicatedStorage:FindFirstChild("WordList")
 if not wordList then
     OrionLib:MakeNotification({
@@ -43,6 +44,9 @@ end
 
 local kataModule = require(wordList:WaitForChild("IndonesianWords"))
 
+-- ================================
+-- REMOTES
+-- ================================
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local MatchUI = remotes:WaitForChild("MatchUI")
@@ -53,51 +57,49 @@ local TypeSound = remotes:WaitForChild("TypeSound")
 local UsedWordWarn = remotes:WaitForChild("UsedWordWarn")
 
 -- =========================================================
--- STATE & KONFIGURASI
+-- STATE & KONFIG
 -- =========================================================
 local matchActive = false
 local isMyTurn = false
 local serverLetter = ""
 
-local usedWords = {}          -- set untuk pengecekan cepat
-local usedWordsList = {}      -- array untuk dropdown (agar terurut)
+local usedWords = {}
+local usedWordsList = {}
 local opponentStreamWord = ""
 local lastSubmittedWord = nil
 
 local autoEnabled = false
 local autoRunning = false
 
--- Konfigurasi user (default)
 local config = {
-    minDelay = 35,        -- ms
-    maxDelay = 150,       -- ms
-    aggression = 50,      -- 0 = acak, 100 = selalu terpanjang
+    minDelay = 35,
+    maxDelay = 150,
+    aggression = 50,
     minLength = 3,
     maxLength = 20
 }
 
 -- =========================================================
--- PERFORMANCE HELPERS
+-- HELPERS
 -- =========================================================
-
 local function isUsed(word)
     return usedWords[string.lower(word)] == true
 end
 
--- Menambahkan kata ke daftar used (untuk dropdown)
+local usedWordsDropdown
+
 local function addUsedWord(word)
     local w = string.lower(word)
     if not usedWords[w] then
         usedWords[w] = true
         table.insert(usedWordsList, word)
-        -- Update dropdown jika sudah dibuat
-        if usedWordsDropdown then
-            usedWordsDropdown:Refresh(usedWordsList, true) -- true = pilih default kosong
+
+        if usedWordsDropdown and usedWordsDropdown.Refresh then
+            usedWordsDropdown:Refresh(usedWordsList, true)
         end
     end
 end
 
--- ⚡ Pencarian kata dengan filter panjang
 local function getSmartWords(prefix)
     prefix = string.lower(prefix)
     local results = {}
@@ -114,7 +116,6 @@ local function getSmartWords(prefix)
         end
     end
 
-    -- Urutkan berdasarkan panjang (terpanjang dulu)
     table.sort(results, function(a, b)
         return #a > #b
     end)
@@ -122,7 +123,6 @@ local function getSmartWords(prefix)
     return results
 end
 
--- 🕒 Delay manusia berdasarkan slider
 local function humanDelay()
     local min = config.minDelay
     local max = config.maxDelay
@@ -131,7 +131,7 @@ local function humanDelay()
 end
 
 -- =========================================================
--- SMART AUTO ENGINE (dengan aggression & bluff)
+-- SMART AUTO ENGINE
 -- =========================================================
 local function startUltraAI()
     if autoRunning then return end
@@ -142,7 +142,7 @@ local function startUltraAI()
     autoRunning = true
 
     task.spawn(function()
-        humanDelay() -- reaksi awal
+        humanDelay()
 
         local words = getSmartWords(serverLetter)
         if #words == 0 then
@@ -150,25 +150,23 @@ local function startUltraAI()
             return
         end
 
-        -- 🎲 Pilih kata berdasarkan aggression
         local selectedWord
+
         if config.aggression >= 100 then
-            selectedWord = words[1]  -- terpanjang
+            selectedWord = words[1]
         elseif config.aggression <= 0 then
-            selectedWord = words[math.random(1, #words)]  -- acak total
+            selectedWord = words[math.random(1, #words)]
         else
-            -- Hitung top N: makin tinggi aggression, makin sedikit opsi
             local topN = math.max(1, math.floor(#words * (1 - config.aggression/100)))
             topN = math.min(topN, #words)
             selectedWord = words[math.random(1, topN)]
         end
 
-        if not selectedWord or isUsed(selectedWord) then
+        if not selectedWord then
             autoRunning = false
             return
         end
 
-        -- Simulasi mengetik huruf per huruf
         local currentWord = serverLetter
         local remain = selectedWord:sub(#serverLetter + 1)
 
@@ -183,38 +181,38 @@ local function startUltraAI()
             TypeSound:FireServer()
             BillboardUpdate:FireServer(currentWord)
 
-            humanDelay() -- jeda antar huruf
-        end
-
-        -- Validasi akhir
-        if not isUsed(selectedWord) then
-            humanDelay() -- jeda sebelum submit
-
-            lastSubmittedWord = selectedWord
-            SubmitWord:FireServer(selectedWord)
-
-            addUsedWord(selectedWord) -- masukkan ke daftar used
-
             humanDelay()
-            BillboardEnd:FireServer()
         end
+
+        humanDelay()
+
+        lastSubmittedWord = selectedWord
+        SubmitWord:FireServer(selectedWord)
+
+        addUsedWord(selectedWord)
+
+        humanDelay()
+        BillboardEnd:FireServer()
 
         autoRunning = false
     end)
 end
 
 -- =========================================================
--- UI (Orion)
+-- UI
 -- =========================================================
 local Window = OrionLib:MakeWindow({
     Name = "Sambung-kata by Sazaraaax",
+    HidePremium = false,
     SaveConfig = false,
-    IntroText = "by sazaraaax"
+    IntroEnabled = false
 })
 
-local Tab = Window:MakeTab({ Name = "Main" })
+local Tab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://4483345998"
+})
 
--- Toggle utama
 Tab:AddToggle({
     Name = "Aktifkan Auto",
     Default = false,
@@ -226,7 +224,6 @@ Tab:AddToggle({
     end
 })
 
--- Slider min delay
 Tab:AddSlider({
     Name = "Min Delay (ms)",
     Min = 10,
@@ -238,7 +235,6 @@ Tab:AddSlider({
     end
 })
 
--- Slider max delay
 Tab:AddSlider({
     Name = "Max Delay (ms)",
     Min = 20,
@@ -250,9 +246,8 @@ Tab:AddSlider({
     end
 })
 
--- Slider aggression (0 = acak, 100 = selalu terpanjang)
 Tab:AddSlider({
-    Name = "Aggression (0 = random, 100 = longest)",
+    Name = "Aggression",
     Min = 0,
     Max = 100,
     Default = config.aggression,
@@ -262,7 +257,6 @@ Tab:AddSlider({
     end
 })
 
--- Slider min panjang kata
 Tab:AddSlider({
     Name = "Min Word Length",
     Min = 1,
@@ -274,7 +268,6 @@ Tab:AddSlider({
     end
 })
 
--- Slider max panjang kata
 Tab:AddSlider({
     Name = "Max Word Length",
     Min = 5,
@@ -286,29 +279,26 @@ Tab:AddSlider({
     end
 })
 
--- Dropdown kata yang telah digunakan
-local usedWordsDropdown = Tab:AddDropdown({
+usedWordsDropdown = Tab:AddDropdown({
     Name = "Used Words",
-    Options = usedWordsList,
     Default = "",
-    Callback = function() end -- tidak perlu aksi
+    Options = usedWordsList,
+    Callback = function() end
 })
 
--- Label status
 local statusLabel = Tab:AddLabel("Status: Idle")
 
 -- =========================================================
--- REMOTE EVENT HANDLERS
+-- REMOTE HANDLERS
 -- =========================================================
 MatchUI.OnClientEvent:Connect(function(cmd, value)
+
     if cmd == "ShowMatchUI" then
         matchActive = true
         isMyTurn = false
         usedWords = {}
         usedWordsList = {}
-        if usedWordsDropdown then
-            usedWordsDropdown:Refresh(usedWordsList, true)
-        end
+        usedWordsDropdown:Refresh(usedWordsList, true)
 
     elseif cmd == "HideMatchUI" then
         matchActive = false
@@ -316,12 +306,9 @@ MatchUI.OnClientEvent:Connect(function(cmd, value)
         serverLetter = ""
         usedWords = {}
         usedWordsList = {}
-        if usedWordsDropdown then
-            usedWordsDropdown:Refresh(usedWordsList, true)
-        end
+        usedWordsDropdown:Refresh(usedWordsList, true)
 
     elseif cmd == "StartTurn" then
-        -- Simpan kata lawan saat turn pindah
         if opponentStreamWord ~= "" then
             addUsedWord(opponentStreamWord)
             opponentStreamWord = ""
@@ -340,25 +327,22 @@ MatchUI.OnClientEvent:Connect(function(cmd, value)
     end
 
     statusLabel:Set(
-        "Match: " .. tostring(matchActive) ..
-        " | Turn: " .. (isMyTurn and "You" or "Opponent") ..
-        " | Start: " .. serverLetter
+        "Match: "..tostring(matchActive)..
+        " | Turn: "..(isMyTurn and "You" or "Opponent")..
+        " | Start: "..serverLetter
     )
 end)
 
--- Stream tulisan lawan (untuk mendeteksi kata yang sedang diketik)
 BillboardUpdate.OnClientEvent:Connect(function(word)
     if matchActive and not isMyTurn then
         opponentStreamWord = word or ""
     end
 end)
 
--- Jika server menolak kata (kata sudah dipakai)
 UsedWordWarn.OnClientEvent:Connect(function(word)
     if word then
         addUsedWord(word)
 
-        -- Coba cari kata lain jika masih giliran kita
         if autoEnabled and matchActive and isMyTurn then
             humanDelay()
             startUltraAI()
@@ -366,8 +350,15 @@ UsedWordWarn.OnClientEvent:Connect(function(word)
     end
 end)
 
--- Kata yang kita submit sendiri juga masuk used (untung jaga-jaga)
--- sebenarnya sudah ditambahkan di startUltraAI, tapi jika ada remote lain yang memicu, kita tangkap
--- (tidak ada event khusus, jadi kita andalkan dari UsedWordWarn dan internal)
-
 OrionLib:Init()
+
+-- ================================
+-- ANDROID FRAME FORCE ACTIVE FIX
+-- ================================
+if UIS.TouchEnabled then
+    for _, v in pairs(game:GetService("CoreGui"):GetDescendants()) do
+        if v:IsA("Frame") then
+            v.Active = true
+        end
+    end
+end
