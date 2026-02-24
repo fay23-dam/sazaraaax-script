@@ -1,24 +1,13 @@
 -- =========================================================
--- ULTRA SMART AUTO KATA (ANDROID SAFE EDITION)
+-- ULTRA SMART AUTO KATA (RAYFIELD EDITION - MOBILE SAFE)
 -- =========================================================
 
 -- ================================
--- MOBILE FIX DETECTION
+-- LOAD RAYFIELD
 -- ================================
-local UIS = game:GetService("UserInputService")
-if UIS.TouchEnabled then
-    getgenv().OrionTouchFix = true
-end
-
--- ================================
--- LOAD ORION (OFFICIAL VERSION)
--- ================================
-local OrionLib = loadstring(game:HttpGet(
-"https://raw.githubusercontent.com/shlexware/Orion/main/source"
-))()
-
-if not OrionLib then
-    warn("Orion gagal dimuat")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+if not Rayfield then
+    warn("Rayfield gagal dimuat")
     return
 end
 
@@ -34,10 +23,10 @@ local LocalPlayer = Players.LocalPlayer
 -- ================================
 local wordList = ReplicatedStorage:FindFirstChild("WordList")
 if not wordList then
-    OrionLib:MakeNotification({
-        Name = "Error",
+    Rayfield:Notify({
+        Title = "Error",
         Content = "WordList tidak ditemukan!",
-        Time = 5
+        Duration = 5
     })
     return
 end
@@ -57,7 +46,7 @@ local TypeSound = remotes:WaitForChild("TypeSound")
 local UsedWordWarn = remotes:WaitForChild("UsedWordWarn")
 
 -- =========================================================
--- STATE & KONFIG
+-- STATE
 -- =========================================================
 local matchActive = false
 local isMyTurn = false
@@ -66,7 +55,6 @@ local serverLetter = ""
 local usedWords = {}
 local usedWordsList = {}
 local opponentStreamWord = ""
-local lastSubmittedWord = nil
 
 local autoEnabled = false
 local autoRunning = false
@@ -94,8 +82,8 @@ local function addUsedWord(word)
         usedWords[w] = true
         table.insert(usedWordsList, word)
 
-        if usedWordsDropdown and usedWordsDropdown.Refresh then
-            usedWordsDropdown:Refresh(usedWordsList, true)
+        if usedWordsDropdown then
+            usedWordsDropdown:Set(usedWordsList)
         end
     end
 end
@@ -186,9 +174,7 @@ local function startUltraAI()
 
         humanDelay()
 
-        lastSubmittedWord = selectedWord
         SubmitWord:FireServer(selectedWord)
-
         addUsedWord(selectedWord)
 
         humanDelay()
@@ -199,97 +185,94 @@ local function startUltraAI()
 end
 
 -- =========================================================
--- UI
+-- UI RAYFIELD
 -- =========================================================
-local Window = OrionLib:MakeWindow({
+local Window = Rayfield:CreateWindow({
     Name = "Sambung-kata by Sazaraaax",
-    HidePremium = false,
-    SaveConfig = false,
-    IntroEnabled = false
+    LoadingTitle = "Loading...",
+    LoadingSubtitle = "Rayfield Edition",
+    ConfigurationSaving = {
+        Enabled = false
+    }
 })
 
-local Tab = Window:MakeTab({
-    Name = "Main",
-    Icon = "rbxassetid://4483345998"
-})
+local MainTab = Window:CreateTab("Main", 4483345998)
 
-Tab:AddToggle({
+MainTab:CreateToggle({
     Name = "Aktifkan Auto",
-    Default = false,
-    Callback = function(v)
-        autoEnabled = v
-        if v then
+    CurrentValue = false,
+    Callback = function(Value)
+        autoEnabled = Value
+        if Value then
             startUltraAI()
         end
     end
 })
 
-Tab:AddSlider({
+MainTab:CreateSlider({
     Name = "Min Delay (ms)",
-    Min = 10,
-    Max = 500,
-    Default = config.minDelay,
+    Range = {10, 500},
     Increment = 5,
-    Callback = function(v)
-        config.minDelay = v
+    CurrentValue = config.minDelay,
+    Callback = function(Value)
+        config.minDelay = Value
     end
 })
 
-Tab:AddSlider({
+MainTab:CreateSlider({
     Name = "Max Delay (ms)",
-    Min = 20,
-    Max = 1000,
-    Default = config.maxDelay,
+    Range = {20, 1000},
     Increment = 5,
-    Callback = function(v)
-        config.maxDelay = v
+    CurrentValue = config.maxDelay,
+    Callback = function(Value)
+        config.maxDelay = Value
     end
 })
 
-Tab:AddSlider({
+MainTab:CreateSlider({
     Name = "Aggression",
-    Min = 0,
-    Max = 100,
-    Default = config.aggression,
+    Range = {0, 100},
     Increment = 5,
-    Callback = function(v)
-        config.aggression = v
+    CurrentValue = config.aggression,
+    Callback = function(Value)
+        config.aggression = Value
     end
 })
 
-Tab:AddSlider({
+MainTab:CreateSlider({
     Name = "Min Word Length",
-    Min = 1,
-    Max = 10,
-    Default = config.minLength,
+    Range = {1, 10},
     Increment = 1,
-    Callback = function(v)
-        config.minLength = v
+    CurrentValue = config.minLength,
+    Callback = function(Value)
+        config.minLength = Value
     end
 })
 
-Tab:AddSlider({
+MainTab:CreateSlider({
     Name = "Max Word Length",
-    Min = 5,
-    Max = 30,
-    Default = config.maxLength,
+    Range = {5, 30},
     Increment = 1,
-    Callback = function(v)
-        config.maxLength = v
+    CurrentValue = config.maxLength,
+    Callback = function(Value)
+        config.maxLength = Value
     end
 })
 
-usedWordsDropdown = Tab:AddDropdown({
+usedWordsDropdown = MainTab:CreateDropdown({
     Name = "Used Words",
-    Default = "",
     Options = usedWordsList,
+    CurrentOption = "",
     Callback = function() end
 })
 
-local statusLabel = Tab:AddLabel("Status: Idle")
+local statusParagraph = MainTab:CreateParagraph({
+    Title = "Status",
+    Content = "Idle"
+})
 
 -- =========================================================
--- REMOTE HANDLERS
+-- REMOTE EVENTS
 -- =========================================================
 MatchUI.OnClientEvent:Connect(function(cmd, value)
 
@@ -298,7 +281,7 @@ MatchUI.OnClientEvent:Connect(function(cmd, value)
         isMyTurn = false
         usedWords = {}
         usedWordsList = {}
-        usedWordsDropdown:Refresh(usedWordsList, true)
+        usedWordsDropdown:Set({})
 
     elseif cmd == "HideMatchUI" then
         matchActive = false
@@ -306,7 +289,7 @@ MatchUI.OnClientEvent:Connect(function(cmd, value)
         serverLetter = ""
         usedWords = {}
         usedWordsList = {}
-        usedWordsDropdown:Refresh(usedWordsList, true)
+        usedWordsDropdown:Set({})
 
     elseif cmd == "StartTurn" then
         if opponentStreamWord ~= "" then
@@ -326,11 +309,12 @@ MatchUI.OnClientEvent:Connect(function(cmd, value)
         serverLetter = value or ""
     end
 
-    statusLabel:Set(
-        "Match: "..tostring(matchActive)..
+    statusParagraph:Set({
+        Title = "Status",
+        Content = "Match: "..tostring(matchActive)..
         " | Turn: "..(isMyTurn and "You" or "Opponent")..
         " | Start: "..serverLetter
-    )
+    })
 end)
 
 BillboardUpdate.OnClientEvent:Connect(function(word)
@@ -349,16 +333,3 @@ UsedWordWarn.OnClientEvent:Connect(function(word)
         end
     end
 end)
-
-OrionLib:Init()
-
--- ================================
--- ANDROID FRAME FORCE ACTIVE FIX
--- ================================
-if UIS.TouchEnabled then
-    for _, v in pairs(game:GetService("CoreGui"):GetDescendants()) do
-        if v:IsA("Frame") then
-            v.Active = true
-        end
-    end
-end
