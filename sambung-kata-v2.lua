@@ -1,325 +1,42 @@
 -- =========================================================
--- ULTRA SMART AUTO KATA (FIXED LOADSTRING & MOBILE OPTIMIZED)
+-- ULTRA SMART AUTO KATA (RAYFIELD EDITION - MOBILE FIXED)
 -- =========================================================
 
 local DEBUG_MODE = true
-local SCRIPT_VERSION = "2.3.1"
+local SCRIPT_VERSION = "2.2.0"
 
+-- ================================
+-- LOADING SCREEN (CENTER TEXT)
+-- ================================
 local Players = game:GetService("Players")
-local RS = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- ================================
--- LOADING SCREEN
--- ================================
-local loadingGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+local loadingGui = Instance.new("ScreenGui")
 loadingGui.Name = "SK_Loading"
+loadingGui.ResetOnSpawn = false
 loadingGui.IgnoreGuiInset = true
 
-local textLabel = Instance.new("TextLabel", loadingGui)
+local textLabel = Instance.new("TextLabel")
 textLabel.Size = UDim2.new(1,0,1,0)
-textLabel.BackgroundTransparency = 0.5
-textLabel.BackgroundColor3 = Color3.fromRGB(0,0,0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextScaled = true
 textLabel.TextColor3 = Color3.fromRGB(255,255,255)
 textLabel.Font = Enum.Font.GothamBold
-textLabel.TextScaled = true
-textLabel.Text = "Initializing Sambung-Kata..."
+textLabel.Text = "Loading Sambung-Kata..."
+textLabel.Parent = loadingGui
 
--- ================================
--- UTIL & LOGIC
--- ================================
-local kataModule = nil
-local usedWords = {}
-local matchActive, isMyTurn = false, false
-local serverLetter = ""
-local autoEnabled, autoRunning = false, false
+loadingGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local config = {
-    minDelay = 35, maxDelay = 150,
-    aggression = 50, minLength = 3, maxLength = 20
-}
-
-local function fastFind(parent, name)
-    return parent:FindFirstChild(name, true)
-end
-
-local function getSmartWords(prefix)
-    if not kataModule then return {} end
-    local results = {}
-    prefix = prefix:lower()
-
-    for _, word in ipairs(kataModule) do
-        local w = tostring(word):lower()
-        if w:sub(1, #prefix) == prefix then
-            if not usedWords[w] and #w >= config.minLength and #w <= config.maxLength then
-                table.insert(results, w)
-            end
-        end
-        if #results >= 100 then break end
+local function removeLoading()
+    if loadingGui then
+        loadingGui:Destroy()
     end
-    
-    table.sort(results, function(a,b) return #a > #b end)
-    return results
 end
 
 -- ================================
--- MAIN EXECUTION
+-- UTIL
 -- ================================
-task.spawn(function()
-    if not game:IsLoaded() then game.Loaded:Wait() end
-
-    -- FIX: Cara Load Rayfield yang lebih aman untuk Mobile
-    local Rayfield
-    local success, err = pcall(function()
-        return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-    end)
-
-    if success and err then
-        Rayfield = err
-    else
-        warn("Rayfield Load Failed: ", err)
-        textLabel.Text = "Rayfield Error! Rejoin Script."
-        return
-    end
-
-    local Window = Rayfield:CreateWindow({
-        Name = "Sambung-Kata v"..SCRIPT_VERSION,
-        LoadingTitle = "Mobile Stable",
-        LoadingSubtitle = "by Gemini",
-        ConfigurationSaving = {Enabled = false}
-    })
-
-    local MainTab = Window:CreateTab("Main")
-
-    -- BACKGROUND LOADING
-    task.spawn(function()
-        textLabel.Text = "Searching WordList (80k words)..."
-        local mod = fastFind(RS, "IndonesianWords")
-        if mod then
-            local s, res = pcall(require, mod)
-            if s then 
-                kataModule = res 
-                Rayfield:Notify({Title = "Database Ready", Content = #kataModule.." words loaded!", Duration = 5})
-            end
-        end
-        if loadingGui then loadingGui:Destroy() end
-    end)
-
-    -- UI Elements
-    MainTab:CreateToggle({
-        Name = "Aktifkan Auto",
-        CurrentValue = false,
-        Callback = function(v) autoEnabled = v end
-    })
-
-    MainTab:CreateSlider({Name = "Aggression %", Range = {0,100}, Increment = 5, CurrentValue = config.aggression, Callback = function(v) config.aggression = v end})
-    MainTab:CreateSlider({Name = "Min Length", Range = {2,30}, Increment = 1, CurrentValue = config.minLength, Callback = function(v) config.minLength = v end})
-    MainTab:CreateSlider({Name = "Min Delay (ms)", Range = {10,500}, Increment = 5, CurrentValue = config.minDelay, Callback = function(v) config.minDelay = v end})
-
-    -- REMOTE HANDLERS
-    local remotes = fastFind(RS, "Remotes")
-    if remotes then
-        local SubmitWord = remotes:FindFirstChild("SubmitWord")
-        local MatchUI = remotes:FindFirstChild("MatchUI")
-        local BillboardUpdate = remotes:FindFirstChild("BillboardUpdate")
-        local BillboardEnd = remotes:FindFirstChild("BillboardEnd")
-        local TypeSound = remotes:FindFirstChild("TypeSound")
-
-        local function startUltraAI()
-            if autoRunning or not autoEnabled or not matchActive or not isMyTurn or serverLetter == "" then return end
-            autoRunning = true
-
-            task.spawn(function()
-                task.wait(math.random(config.minDelay, config.maxDelay)/1000)
-                local words = getSmartWords(serverLetter)
-                if #words == 0 then autoRunning = false return end
-
-                local selectedWord = (config.aggression >= 80) and words[1] or words[math.random(1, #words)]
-                local currentWord = serverLetter
-
-                for i = #serverLetter + 1, #selectedWord do
-                    if not matchActive or not isMyTurn then break end
-                    currentWord = selectedWord:sub(1, i)
-                    if TypeSound then pcall(function() TypeSound:FireServer() end) end
-                    if BillboardUpdate then pcall(function() BillboardUpdate:FireServer(currentWord) end) end
-                    task.wait(0.05)
-                end
-
-                if isMyTurn and matchActive then
-                    pcall(function() SubmitWord:FireServer(selectedWord) end)
-                    usedWords[selectedWord:lower()] = true
-                end
-                autoRunning = false
-            end)
-        end
-
-        -- Events
-        if MatchUI then
-            MatchUI.OnClientEvent:Connect(function(data)
-                if data and data.Letter then
-                    serverLetter = data.Letter
-                    matchActive = true
-                    isMyTurn = (data.TurnPlayer == LocalPlayer.Name)
-                    if isMyTurn then startUltraAI() end
-                end
-            end)
-        end
-
-        if BillboardEnd then
-            BillboardEnd.OnClientEvent:Connect(function()
-                matchActive = false
-                isMyTurn = false
-                usedWords = {}
-            end)
-        end
-    end
-end)
-local matchActive, isMyTurn = false, false
-local serverLetter = ""
-local autoEnabled, autoRunning = false, false
-
-local config = {
-    minDelay = 35, maxDelay = 150,
-    aggression = 50, minLength = 3, maxLength = 20
-}
-
--- Fungsi Pencarian Cepat (Recursive)
-local function fastFind(parent, name)
-    return parent:FindFirstChild(name, true)
-end
-
--- Optimasi Pencarian 80k Kata (Anti-Lag)
-local function getSmartWords(prefix)
-    if not kataModule then return {} end
-    local results = {}
-    prefix = prefix:lower()
-
-    for _, word in ipairs(kataModule) do
-        local w = tostring(word):lower()
-        if w:sub(1, #prefix) == prefix then
-            if not usedWords[w] and #w >= config.minLength and #w <= config.maxLength then
-                table.insert(results, w)
-            end
-        end
-        -- Batasi iterasi agar HP tidak freeze (ambil 100 kandidat saja)
-        if #results >= 100 then break end
-    end
-    
-    table.sort(results, function(a,b) return #a > #b end)
-    return results
-end
-
--- ================================
--- MAIN EXECUTION
--- ================================
-task.spawn(function()
-    if not game:IsLoaded() then game.Loaded:Wait() end
-
-    -- 1. LOAD RAYFIELD DULU (Agar UI muncul instan)
-    local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-    local Window = Rayfield:CreateWindow({
-        Name = "Sambung-Kata v"..SCRIPT_VERSION,
-        LoadingTitle = "Mobile Stable",
-        LoadingSubtitle = "by Gemini",
-        ConfigurationSaving = {Enabled = false}
-    })
-
-    local MainTab = Window:CreateTab("Main")
-
-    -- 2. BACKGROUND LOADING (Data & Remotes)
-    task.spawn(function()
-        textLabel.Text = "Searching WordList (80k words)..."
-        local mod = fastFind(RS, "IndonesianWords")
-        if mod then
-            local success, res = pcall(require, mod)
-            if success then 
-                kataModule = res 
-                Rayfield:Notify({Title = "Database Ready", Content = #kataModule.." words loaded!", Duration = 5})
-            end
-        end
-        removeLoading()
-    end)
-
-    -- UI Elements (Logika Asli Anda)
-    MainTab:CreateToggle({
-        Name = "Aktifkan Auto",
-        CurrentValue = false,
-        Callback = function(v) autoEnabled = v end
-    })
-
-    MainTab:CreateSlider({Name = "Aggression %", Range = {0,100}, Increment = 5, CurrentValue = config.aggression, Callback = function(v) config.aggression = v end})
-    MainTab:CreateSlider({Name = "Min Length", Range = {2,30}, Increment = 1, CurrentValue = config.minLength, Callback = function(v) config.minLength = v end})
-    MainTab:CreateSlider({Name = "Max Length", Range = {3,50}, Increment = 1, CurrentValue = config.maxLength, Callback = function(v) config.maxLength = v end})
-    MainTab:CreateSlider({Name = "Min Delay (ms)", Range = {10,500}, Increment = 5, CurrentValue = config.minDelay, Callback = function(v) config.minDelay = v end})
-
-    -- 3. REMOTE HANDLERS
-    local remotes = fastFind(RS, "Remotes")
-    if remotes then
-        local SubmitWord = remotes:FindFirstChild("SubmitWord")
-        local MatchUI = remotes:FindFirstChild("MatchUI")
-        local BillboardUpdate = remotes:FindFirstChild("BillboardUpdate")
-        local BillboardEnd = remotes:FindFirstChild("BillboardEnd")
-        local TypeSound = remotes:FindFirstChild("TypeSound")
-
-        local function startUltraAI()
-            if autoRunning or not autoEnabled or not matchActive or not isMyTurn or serverLetter == "" then return end
-            autoRunning = true
-
-            task.spawn(function()
-                task.wait(math.random(config.minDelay, config.maxDelay)/1000)
-                local words = getSmartWords(serverLetter)
-                if #words == 0 then autoRunning = false return end
-
-                local selectedWord = (config.aggression >= 80) and words[1] or words[math.random(1, #words)]
-                local currentWord = serverLetter
-
-                for i = #serverLetter + 1, #selectedWord do
-                    if not matchActive or not isMyTurn then break end
-                    currentWord = selectedWord:sub(1, i)
-                    if TypeSound then TypeSound:FireServer() end
-                    if BillboardUpdate then BillboardUpdate:FireServer(currentWord) end
-                    task.wait(0.05) -- Human typing speed
-                end
-
-                if isMyTurn then
-                    SubmitWord:FireServer(selectedWord)
-                    usedWords[selectedWord:lower()] = true
-                end
-                autoRunning = false
-            end)
-        end
-
-        -- Listeners
-        MatchUI.OnClientEvent:Connect(function(data)
-            if data and data.Letter then
-                serverLetter = data.Letter
-                matchActive = true
-                isMyTurn = (data.TurnPlayer == LocalPlayer.Name)
-                if isMyTurn then startUltraAI() end
-            end
-        end)
-
-        BillboardEnd.OnClientEvent:Connect(function()
-            matchActive = false
-            isMyTurn = false
-            usedWords = {}
-        end)
-    end
-end)
-                
-                if isMyTurn then startAI() end
-            else
-                matchActive = false
-            end
-        end)
-        
-        -- Reset kata yang terpakai jika match berakhir
-        remotes:FindFirstChild("BillboardEnd").OnClientEvent:Connect(function()
-            usedWords = {}
-            matchActive = false
-        end)
-    end
-end)
+local function trim(str)
     if not str or type(str) ~= "string" then return "" end
     return (str:gsub("^%s*(.-)%s*$", "%1"))
 end
