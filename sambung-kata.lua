@@ -1,11 +1,36 @@
--- =========================================================
--- ULTRA SMART AUTO KATA (RAYFIELD EDITION - MOBILE SAFE)
--- =========================================================
+-- ================================
+-- LOAD RAYFIELD (DELTA STABLE FIX)
+-- ================================
 
--- ================================
--- LOAD RAYFIELD
--- ================================
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield
+local function loadRayfield()
+    local urls = {
+        "https://sirius.menu/rayfield"
+    }
+
+    for _, url in ipairs(urls) do
+        for i = 1, 3 do -- retry 3x
+            local success, result = pcall(function()
+                return loadstring(game:HttpGet(url))()
+            end)
+
+            if success and result then
+                return result
+            end
+
+            task.wait(1)
+        end
+    end
+
+    return nil
+end
+
+Rayfield = loadRayfield()
+
+if not Rayfield then
+    warn("Rayfield gagal dimuat setelah retry")
+    return
+end
 
 if not Rayfield then
     warn("Rayfield gagal dimuat")
