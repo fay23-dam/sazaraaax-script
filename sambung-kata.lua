@@ -1,50 +1,14 @@
-loadstring(game:HttpGet('https://raw.githubusercontent.com/fay23-dam/sazaraaax-script/refs/heads/main/sambung-kata.lua'))()
-
 -- =========================================================
 -- ULTRA SMART AUTO KATA (RAYFIELD EDITION - MOBILE SAFE)
--- DENGAN PENANGANAN ERROR DAN FALLBACK URL
 -- =========================================================
 
 -- ================================
--- FUNGSI UNTUK LOAD RAYFIELD DENGAN FALLBACK
+-- LOAD RAYFIELD
 -- ================================
-local Rayfield = nil
-local function loadRayfield()
-    -- Daftar URL cadangan (fallback)
-    local urls = {
-        'https://sirius.menu/rayfield',  -- URL utama
-        'https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source', -- Fallback ke raw GitHub
-    }
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-    for i, url in ipairs(urls) do
-        local success, result = pcall(function()
-            return game:HttpGet(url)
-        end)
-
-        if success and result then
-            local loadSuccess, lib = pcall(loadstring, result)
-            if loadSuccess and lib then
-                Rayfield = lib
-                print("✅ Rayfield berhasil dimuat dari: " .. url)
-                return true
-            else
-                warn("⚠️ Gagal mengkompilasi Rayfield dari: " .. url)
-            end
-        else
-            warn("⚠️ Gagal mengunduh Rayfield dari: " .. url)
-        end
-        task.wait(1) -- Jeda sebentar sebelum coba URL berikutnya
-    end
-    return false
-end
-
--- Panggil fungsi untuk memuat Rayfield
-if not loadRayfield() then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Fatal Error",
-        Text = "Tidak dapat memuat library Rayfield. Periksa koneksi internet Anda.",
-        Duration = 10
-    })
+if not Rayfield then
+    warn("Rayfield gagal dimuat")
     return
 end
 
@@ -68,21 +32,7 @@ if not wordList then
     return
 end
 
--- Gunakan pcall untuk menghindari error jika IndonesianWords tidak ada
-local kataModule
-local success, module = pcall(function()
-    return require(wordList:WaitForChild("IndonesianWords"))
-end)
-
-if not success or not module then
-    Rayfield:Notify({
-        Title = "Error",
-        Content = "Gagal memuat modul IndonesianWords!",
-        Duration = 5
-    })
-    return
-end
-kataModule = module
+local kataModule = require(wordList:WaitForChild("IndonesianWords"))
 
 -- ================================
 -- REMOTES
@@ -241,7 +191,7 @@ end
 local Window = Rayfield:CreateWindow({
     Name = "Sambung-kata by Sazaraaax",
     LoadingTitle = "Loading...",
-    LoadingSubtitle = "Rayfield Edition (Stable)",
+    LoadingSubtitle = "Rayfield Edition",
     ConfigurationSaving = {
         Enabled = false
     }
@@ -384,10 +334,3 @@ UsedWordWarn.OnClientEvent:Connect(function(word)
         end
     end
 end)
-
--- Notifikasi sukses
-Rayfield:Notify({
-    Title = "Sukses",
-    Content = "Script siap digunakan! 🚀",
-    Duration = 3
-})
