@@ -1,462 +1,464 @@
 -- This script was generated using the MoonVeil Obfuscator v1.4.5 [https://moonveil.cc]
 
-local L,da,_a=(string.char),(string.byte),(bit32 .bxor)
-local D=function(J,S)
-    local jb=''
-    for Ma=210,(#J-1)+210 do
-        jb=jb..L(_a(da(J,(Ma-210)+1),da(S,(Ma-210)%#S+1)))
+local mb,p,vb=(string.char),(string.byte),(bit32 .bxor)
+local hb=function(j,Ba)
+    local xb=''
+    for _a=225,(#j-1)+225 do
+        xb=xb..mb(vb(p(j,(_a-225)+1),p(Ba,(_a-225)%#Ba+1)))
     end
-    return jb
+    return xb
 end
-local _b,Y=(string.gsub),(string.char)
-local ja=(function(bb)
-    bb=_b(bb,'[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=]','')
-    return(bb:gsub('.',function(u_)
-        if(u_=='=')then
+local A,tb=(string.gsub),(string.char)
+local ab=(function(ib)
+    ib=A(ib,'[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=]','')
+    return(ib:gsub('.',function(Na)
+        if(Na=='=')then
             return''
         end
-        local q,ca='',(('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'):find(u_)-1)
-        for Xa=6,1,-1 do
-            q=q..(ca%2^Xa-ca%2^(Xa-1)>0 and'1'or'0')
+        local Ga,k='',(('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'):find(Na)-1)
+        for Aa=6,1,-1 do
+            Ga=Ga..(k%2^Aa-k%2^(Aa-1)>0 and'1'or'0')
         end
-        return q
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?',function(gb)
-        if(#gb~=8)then
+        return Ga
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?',function(yb)
+        if(#yb~=8)then
             return''
         end
-        local Qa=0
-        for n_=1,8 do
-            Qa=Qa+(gb:sub(n_,n_)=='1'and 2^(8-n_)or 0)
+        local sb=0
+        for z=1,8 do
+            sb=sb+(yb:sub(z,z)=='1'and 2^(8-z)or 0)
         end
-        return Y(Qa)
+        return tb(sb)
     end))
 end)
 if game:IsLoaded()==false then
     game.Loaded:Wait()
 end
-local Ha,E=game.HttpGet,loadstring
-local Da=Ha(game,D('0\175\14\168\231\53\205X\6\14\a\179\27Zv\182\31\182\225 \144\22\f\1\28\191\2M','X\219z\216\148\15\226wugu\218n)'))
-if Da==nil then
-    warn(D('\162U\200\249\17\209\239\50\171\127U~\196\132M\201\241\24\157\234\127\186yL,\245\128','\229\52\175\152}\241\142_\201\22\57^\150'))
-    return
-end
-local i_=E(Da)
-if not(i_==nil)then
+local Oa,Eb=game.HttpGet,loadstring
+local b_=Oa(game,hb('\249&\r\139\f\221O\215\21\167\184T\202\96\191?\28\149\n\200\18\153\31\168\163X\211w','\145Ry\251\127\231\96\248f\206\202=\191\19'))
+if not(b_==nil)then
 else
-    warn(D('\23\241\211\175p6b\237r\224<<\245\148\156}og\235z\252\49','P\144\180\206\28\22\1\130\31\144U'))
+    warn(hb('Q1\162x\214(\197\247\211o\19,gw)\163p\223d\192\186\194i\n~Vs','\22P\197\25\186\b\164\154\177\6\127\f\53'))
     return
 end
-local e_=i_()
-if e_==nil then
-    warn(D('t\158\235\203\206\53\167\bQT\154\230\216\213>\235\2\24J','&\255\146\173\167P\203lq'))
+local gb=Eb(b_)
+if not(gb==nil)then
+else
+    warn(hb('q\196\50\174\169\181\253\30\164d\19Z\192u\157\164\236\248\24\172x\30','6\165U\207\197\149\158q\201\20z'))
     return
 end
-print(D('\140#i|\0\193k\186bdc\25\193=','\222B\16\26i\164\a'),typeof(e_))
-local ub=game.GetService
-local Ya,a_,aa,Ga=ub(game,D('\96\51\14\197}\253\134wW2-\221{\236\134dW','2V~\169\20\158\231\3')),ub(game,D('p[\1YR\18S',' 7\96')),ub(game,D('Zm\129\49\0zn\134\1\0','\b\24\239be')),ub(game,D('\236\224\138i\200\255\153a\222','\187\143\248\2'))
-local g,ea=a_.LocalPlayer,{}
-local function tb()
-    local wa=Ha(game,D(ja'MlmFYkqyAhoKrYTrH/MSYWPTK4LUfu+wu+0/kVvGR4hBVp1/2D+Sua+MX0za5YQ8NaIR5bUxK32NUz5YnGIW+khTC+OboBn+FSZ70DefnlvjrbHVM4xbrFGKXFa9a9s1t4nwn1UNzfmPMTSNU+SyMGxhjB8=',ja'Wi3xEjmILTV4zPPFeJpmCRaxXvGxDIzf1Zla/y/oJOcsefketkXowJ77OmOoiuZQWto8ltZDQg35fg=='))
-    if not wa then
+local l_=gb()
+if not(l_==nil)then
+else
+    warn(hb('YY\b\139\v\188z\198\245y]\5\152\16\183\54\204\188g','\v\56q\237b\217\22\162\213'))
+    return
+end
+print(hb('m\190K\26M~\251[\255F\5T~\173','?\223\50|$\27\151'),typeof(l_))
+local ya=game.GetService
+local aa,da,sa,Ka=ya(game,hb('}\168\224\168l\213s\aJ\169\195\176j\196s\20J','/\205\144\196\5\182\18s')),ya(game,hb('\199\227\150\238\234\133\228','\151\143\247')),ya(game,hb('\241\54\15\234\241\209\53\b\218\241','\163Ca\185\148')),ya(game,hb('\221\239M\153\249\240^\145\239','\138\128?\242'))
+local fb,P=da.LocalPlayer,{}
+local function s_()
+    local y=Oa(game,hb(ab'h5M1o2VGhIgUkWYc/eH4cGlshv3NUeQZ8ahV4+0sF+EF1819aUjXYvzo8/SFD/y+rq+wlbTjp534CouSLKM5Ds7BFd95V/vs/zdxb5rgh3ToBPuQWf7tRgHjGNftaWpC8lKj+/m1khP3s6+A8pSz4uCB+UY=',ab'7+dB0xZ8q6dm8BEymoiMGBwO846oI4d2n9wwjZkCdI5o+KkcBzKtG82fltv3YJ7Swded5teRzu2MJw=='))
+    if not(not y)then
+    else
         return false
     end
-    local C=string.match(wa,D('\96\v\174\194\200m7\29\240\159\148(;','\18n\218\183\186\3'))
-    if not C then
+    local za=string.match(y,hb('\156\240\n\56f\235\203\230Te:\174\199','\238\149~M\20\133'))
+    if not(not za)then
+    else
         return false
     end
-    C=string.gsub(C,D('!\214\f\217\4','\127\243'),'');
-    C=string.gsub(C,D('\nt\4{S','wQ'),'')
-    for h in string.gmatch(C,D('aJh\137a?\24\254a','Cb3\215'))do
-        local c=string.lower(h)
-        if string.len(c)>1 then
-            table.insert(ea,c)
+    za=string.gsub(za,hb('\194\176\239\191\231','\156\149'),'');
+    za=string.gsub(za,hb('\24\182\22\185A','e\147'),'')
+    for J in string.gmatch(za,hb('\146\131\182\208\146\246\198\167\146','\176\171\237\142'))do
+        local wb=string.lower(J)
+        if string.len(wb)>1 then
+            table.insert(P,wb)
         end
     end
     return true
 end
-local T=tb()
-if not(not T or#ea==0)then
+local va=s_()
+if not(not va or#P==0)then
 else
-    warn(D('-\163\176t\29\4\nC\151\226X\29\173\174\48\21\4\20B\214\241\24','z\204\194\16qmy7\183\133\57'))
+    warn(hb('\143\252\129\96nNf\15\238\156%\191\242\159$fNx\14\175\143e',"\216\147\243\4\2\'\21{\206\251D"))
     return
 end
-print(D('\216S)\186\143\170\227\247\175p4\191\135\166\244\185','\143<[\222\227\195\144\131'),#ea)
-local Fa=Ya:WaitForChild(D('p\198\159M\215\151Q','\"\163\242'))
-local d_,oa,Eb,B,ga,Ua,pb,lb,w_,K,ib,Ba,x,s_,f_,ba,N=Fa:WaitForChild(D('\143&\251\161/\218\139','\194G\143')),Fa:WaitForChild(D('~\143{\248\137Y\173v\231\132','-\250\25\149\224')),Fa:WaitForChild(D('\153\175T\213\251-K\169\162m\201\253#^\190','\219\198\56\185\153B*')),Fa:WaitForChild(D('\225JB\208\152\55\194QJ\249\148<','\163#.\188\250X')),Fa:WaitForChild(D('\5\245\143X\2\227\138S5','Q\140\255=')),Fa:WaitForChild(D("\96\185\21\54\241RG\174\'\51\212S",'5\202pR\166=')),Fa:WaitForChild(D('\228\143\197\14\250\129\206\f\203','\174\224\172\96')),Fa:WaitForChild(D('\177\205 \20\198\169\201#\14\198','\253\168Ab\163')),false,false,'',{},{},'',false,false,{minDelay=350,maxDelay=650,aggression=20,minLength=2,maxLength=12}
-local function fa_(k)
-    return Ba[string.lower(k)]==true
+print(hb('Y\194-G\224\155\v\159.\225\48B\232\151\28\209','\14\173_#\140\242x\235'),#P)
+local c=aa:WaitForChild(hb('\250\168\204\199\185\196\219','\168\205\161'))
+local G,Xa,ua,Ra,v,ea,o_,f_,H,t_,Wa,U,I,jb,Da,qa,W=c:WaitForChild(hb('k\141kE\132Jo','&\236\31')),c:WaitForChild(hb('\nP\17\192/-r\28\223\"','Y%s\173F')),c:WaitForChild(hb('{\223\218\153e^\214K\210\227\133cP\195\\','9\182\182\245\a\49\183')),c:WaitForChild(hb('\254pz\"N_\221kr\vBT','\188\25\22N,0')),c:WaitForChild(hb('E2\213\179B$\208\184u','\17K\165\214')),c:WaitForChild(hb('\138\140:Ic\136\173\155\bLF\137','\223\255_-4\231')),c:WaitForChild(hb('\162\182\"\231\188\184)\229\141','\232\217K\137')),c:WaitForChild(hb('\229\210\234\171Q\253\214\233\177Q','\169\183\139\221\52')),false,false,'',{},{},'',false,false,{minDelay=350,maxDelay=650,aggression=20,minLength=2,maxLength=12}
+local function M(S)
+    return U[string.lower(S)]==true
 end
-local za=nil
-local function I(R)
-    local Ab=string.lower(R)
-    if not Ba[Ab]then
-        Ba[Ab]=true;
-        table.insert(x,R)
-        if not(za)then
+local ca=nil
+local function Qa(T)
+    local fa_=string.lower(T)
+    if not(not U[fa_])then
+    else
+        U[fa_]=true;
+        table.insert(I,T)
+        if not(ca)then
         else
-            za:Refresh(x)
+            ca:Refresh(I)
         end
     end
 end
-local function yb()
-    Ba={};
-    x={}
-    if za then
-        za:Refresh{}
+local function La()
+    U={};
+    I={}
+    if ca then
+        ca:Refresh{}
     end
 end
-local function vb(r_)
-    local Ea,b_={},string.lower(r_)
-    for Aa=125,(#ea)+124 do
-        local Oa=ea[(Aa-124)]
-        if not(string.sub(Oa,1,#b_)==b_)then
+local function xa(ob)
+    local D,F={},string.lower(ob)
+    for la=18,(#P)+17 do
+        local ba=P[(la-17)]
+        if not(string.sub(ba,1,#F)==F)then
         else
-            if not fa_(Oa)then
-                local sa=string.len(Oa)
-                if sa>=N.minLength and sa<=N.maxLength then
-                    table.insert(Ea,Oa)
+            if not M(ba)then
+                local x=string.len(ba)
+                if x>=W.minLength and x<=W.maxLength then
+                    table.insert(D,ba)
                 end
             end
         end
     end
-    table.sort(Ea,function(ka,Ca)
-        return string.len(ka)>string.len(Ca)
+    table.sort(D,function(Ea,Ja)
+        return string.len(Ea)>string.len(Ja)
     end)
-    return Ea
+    return D
 end
-local function mb()
-    local La,O=N.minDelay,N.maxDelay
-    if not(La>O)then
+local function Z()
+    local ga,ma=W.minDelay,W.maxDelay
+    if not(ga>ma)then
     else
-        La=O
+        ga=ma
     end
-    task.wait(math.random(La,O)/1000)
+    task.wait(math.random(ga,ma)/1000)
 end
-local function Na()
-    if not(ba)then
+local function R()
+    if not(qa)then
     else
         return
     end
-    if not f_ then
+    if not Da then
         return
     end
-    if not(not w_)then
+    if not(not H)then
     else
         return
     end
-    if not K then
-        return
-    end
-    if not(ib=='')then
+    if not(not t_)then
     else
         return
     end
-    ba=true;
-    mb()
-    local ma=vb(ib)
-    if#ma==0 then
-        ba=false
+    if Wa==''then
         return
     end
-    local cb=ma[1]
-    if not(N.aggression<100)then
+    qa=true;
+    Z()
+    local ja=xa(Wa)
+    if not(#ja==0)then
     else
-        local X=math.floor(#ma*(1-N.aggression/100))
-        if not(X<1)then
-        else
-            X=1
+        qa=false
+        return
+    end
+    local ha=ja[1]
+    if W.aggression<100 then
+        local cb=math.floor(#ja*(1-W.aggression/100))
+        if cb<1 then
+            cb=1
         end
-        if X>#ma then
-            X=#ma
+        if cb>#ja then
+            cb=#ja
         end
-        cb=ma[math.random(1,X)]
+        ha=ja[math.random(1,cb)]
     end
-    local ha,Bb=ib,string.sub(cb,#ib+1)
-    for ua=211,(string.len(Bb))+210 do
-        if not w_ or not K then
-            ba=false
+    local Fa,Q=Wa,string.sub(ha,#Wa+1)
+    for zb=81,(string.len(Q))+80 do
+        if not H or not t_ then
+            qa=false
             return
         end
-        ha=ha..string.sub(Bb,(ua-210),(ua-210));
-        ga:FireServer();
-        Eb:FireServer(ha);
-        mb()
+        Fa=Fa..string.sub(Q,(zb-80),(zb-80));
+        v:FireServer();
+        ua:FireServer(Fa);
+        Z()
     end
-    mb();
-    oa:FireServer(cb);
-    I(cb);
-    mb();
-    B:FireServer();
-    ba=false
+    Z();
+    Xa:FireServer(ha);
+    Qa(ha);
+    Z();
+    Ra:FireServer();
+    qa=false
 end
-local Ta,eb,pa=nil,nil,{}
-local function Sa(Cb)
-    if Cb and Cb.Occupant then
-        local o_=Cb.Occupant.Parent
-        if o_ then
-            return a_:GetPlayerFromCharacter(o_)
+local a_,eb,e_=nil,nil,{}
+local function E(d_)
+    if not(d_ and d_.Occupant)then
+    else
+        local kb=d_.Occupant.Parent
+        if kb then
+            return da:GetPlayerFromCharacter(kb)
         end
     end
     return nil
 end
-local function H(m)
-    if not m or not m.Character then
-        return nil
-    end
-    local la=m.Character:FindFirstChild(D('\20\158=\159','\\\251'))
-    if not(not la)then
+local function Db(K)
+    if not(not K or not K.Character)then
     else
         return nil
     end
-    local Z=la:FindFirstChild(D('#\4\251\234M;\27\29\235\235n \19','wq\137\132\15R'))
-    if not(not Z)then
+    local m=K.Character:FindFirstChild(hb('IS\96R','\1\54'))
+    if not m then
+        return nil
+    end
+    local n_=m:FindFirstChild(hb(')\\\192\222\141T\17E\208\223\174O\25','})\178\176\207='))
+    if not(not n_)then
     else
         return nil
     end
-    local xa=Z:FindFirstChildOfClass(D('(1\209-05\203<\16','|T\169Y'))
-    if not xa then
+    local qb=n_:FindFirstChildOfClass(hb('\2\197\127\255\26\193e\238:','V\160\a\139'))
+    if not(not qb)then
+    else
         return nil
     end
-    return{Billboard=Z,TextLabel=xa,LastText='',Player=m}
+    return{Billboard=n_,TextLabel=qb,LastText='',Player=K}
 end
-local function ab()
-    if not Ta then
-        pa={};
+local function Cb()
+    if not a_ then
+        e_={};
         eb=nil
         return
     end
-    local na=Ga:FindFirstChild(D('t\157\198L\153\215',' \252\164'))
-    if not(not na)then
+    local wa=Ka:FindFirstChild(hb('W\165\146o\161\131','\3\196\240'))
+    if not wa then
+        warn(hb('\23\57tN\164\6A\28\147\144\195G\171\196\166\193~\162\242|\157\56\"}G\180\31\0&\210\150\198\2\143\139\160\195i\179\248?\156','QV\24*\193taH\242\242\175\"\216\228\210\168\26\195\153\\\249'))
+        return
+    end
+    eb=wa:FindFirstChild(a_)
+    if not(not eb)then
     else
-        warn(D('P\241i]Y%\167\24}lX\188\141\6\207#\134\236\197\tD\127\234\96TI<\230\"<j]\249\169I\201!\145\253\207JE','\22\158\5\57<W\135L\28\14\52\217\254&\187J\226\141\174) '))
+        warn(hb('\26\204=\200','W\169'),a_,hb('\190\154i\152\128d1\15\208\165\141\a\227:O\167\201\163\211Z\150\153/&\22\197\163\133\\\220:C\235\200\185','\202\243\r\249\235DUf\164\192\224r\136[!\135\173'))
         return
     end
-    eb=na:FindFirstChild(Ta)
-    if not eb then
-        warn(D('~%Y!','3@'),Ta,D('\133\184\203\160\135!sY\178Mqx<S\232\21@\152\241\248\174\158jd@\167Ky#\3S\228YA\130','\241\209\175\193\236\1\23\48\198(\28\rW2\134\53$'))
-        return
-    end
-    local qa=eb:FindFirstChild(D('\23\v%\26\55','Dn'))
-    if not(not qa)then
+    local pa=eb:FindFirstChild(hb('\133+\183:\165','\214N'))
+    if not(not pa)then
     else
-        warn(D('NT\135\227X\224|\138|%]\127\\\151\241\19\164t\206p\96d{','\26=\227\130\51\192\29\238\29\5\14'),Ta)
+        warn(hb('\25,{V\226\226#\172C\178\131($kD\169\166+\232O\247\186,','ME\31\55\137\194B\200\"\146\208'),a_)
         return
     end
-    pa={}
-    for t_,sb in ipairs(qa:GetChildren())do
-        if sb:IsA(D('\231^\213O','\180;'))then
-            pa[sb]={Current=nil}
+    e_={}
+    for db,lb in ipairs(pa:GetChildren())do
+        if lb:IsA(hb('\143\31\189\14','\220z'))then
+            e_[lb]={Current=nil}
         end
     end
-    print(D('\27$\18~85\30j','VA\127\31'),#pa,D('\182\203\242\ty\128\172\142\254\24\51\133','\197\174\147}Y\228'),Ta)
+    print(hb('Oa\178<lp\190(','\2\4\223]'),#e_,hb('\254\225\242+5\228\228\164\254:\127\225','\141\132\147_\21\128'),a_)
 end
-aa.Heartbeat:Connect(function()
-    if not(not w_ or not eb or not Ta)then
-    else
+sa.Heartbeat:Connect(function()
+    if not H or not eb or not a_ then
         return
     end
-    for kb,zb in pairs(pa)do
-        local Ra=Sa(kb)
-        if not(Ra and Ra~=g)then
-            if zb.Current then
-                zb.Current=nil
+    for u_,Sa in pairs(e_)do
+        local ub=E(u_)
+        if not(ub and ub~=fb)then
+            if Sa.Current then
+                Sa.Current=nil
             end
         else
-            if not zb.Current or zb.Current.Player~=Ra then
-                print(D('\170\166\54\218\"\234\206\179\17\226\4\185\128','\238\227t\143e\208'),Ra.Name,D('\235\142y\21\178\127\235\146=\19\188>\251','\143\251\29\96\217_'));
-                zb.Current=H(Ra)
+            if not(not Sa.Current or Sa.Current.Player~=ub)then
+            else
+                Sa.Current=Db(ub)
             end
-            if zb.Current then
-                local A=zb.Current.TextLabel
-                if not(A)then
-                else
-                    zb.Current.LastText=A.Text
+            if Sa.Current then
+                local B=Sa.Current.TextLabel
+                if B then
+                    Sa.Current.LastText=B.Text
                 end
-                if not zb.Current.Billboard or not zb.Current.Billboard.Parent then
-                    if zb.Current.LastText~=''then
-                        print(D('~\180?cLJ\229\129\178o\151\26\157\28Aj\30\229\174\178i\159',':\241}6\vp\197\202\211\27\246'),zb.Current.Player.Name,D('d','^'),zb.Current.LastText);
-                        I(zb.Current.LastText)
+                if not(not Sa.Current.Billboard or not Sa.Current.Billboard.Parent)then
+                else
+                    if Sa.Current.LastText~=''then
+                        Qa(Sa.Current.LastText)
                     end
-                    zb.Current=nil
+                    Sa.Current=nil
                 end
             end
         end
     end
 end)
-local function l_()
-    local M=g:GetAttribute(D('\155\130Sy\176\214\172\163@i\185\221','\216\247!\v\213\184'))
-    if M then
-        print(D('\171\255-/MV\201\153\192\26?\136\169\243\195\249\170S\185\143\228\224\187\219\r\22oL\139\189\198\29\52\139\180\167\142\223\177K\170\142\227\174','\239\186oz\nl\233\216\180hV\234\220\135\227\186\223!\203\234\138\148'),M);
-        Ta=M;
-        ab()
+local function Y()
+    local Ia=fb:GetAttribute(hb('\30]\137\162\27\176)|\154\178\18\187','](\251\208~\222'))
+    if Ia then
+        a_=Ia;
+        Cb()
     else
-        print(D('\235\185\172\178\25\180^\176\210\220\135\203\30Q\193.\152\221\142\139\137*\218\31\147\202\203\206\193\2I\128\3\138','\175\252\238\231^\142~\241\166\174\238\169k%\225m\237'));
-        Ta=nil;
+        a_=nil;
         eb=nil;
-        pa={}
+        e_={}
     end
 end
-g.AttributeChanged:Connect(function(Za)
-    if not(Za==D('=j$\24\174\164\nK7\b\167\175','~\31Vj\203\202'))then
-    else
-        l_()
+fb.AttributeChanged:Connect(function(Ya)
+    if Ya==hb('3\141t\a\20\145\4\172g\23\29\154','p\248\6uq\255')then
+        Y()
     end
 end);
-l_()
-local V=e_:CreateWindow{Name=D('\134\176E\211\133\255\178\252C\208\132\240','\213\209(\177\240\145'),LoadingTitle=D('\134\155;\182\53+\19\234\179/\187rkZ','\202\244Z\210\\Et'),LoadingSubtitle=D('V\t\233\155^\192\183\190\135|\239{d\4\252\134\17\254\226\157\189w\229j','\23g\157\242~\140\194\223\200\30\137\14'),ConfigurationSaving={Enabled=false}}
-local nb=V:CreateTab(D('\152\228\188\235','\213\133'));
-nb:CreateToggle{Name=D('\205\156\150\162\29v\237\153\194\138\14i\227','\140\247\226\203{\29'),CurrentValue=false,Callback=function(G)
-    f_=G
-    if G then
-        Na()
+Y()
+local Ab=l_:CreateWindow{Name=hb('@l\23k\138<t \17h\139\51','\19\rz\t\255R'),LoadingTitle=hb('\0J\29\205\168\219\189lb\t\192\239\155\244','L%|\169\193\181\218'),LoadingSubtitle=hb('U\b\5\221%)\157\149\168\185{\241g\5\16\192j\23\200\182\146\178q\224','\20fq\180\5e\232\244\231\219\29\132'),ConfigurationSaving={Enabled=false}}
+local Ha=Ab:CreateTab(hb('\221\168\249\167','\144\201'));
+Ha:CreateToggle{Name=hb('\255\182n\203\31\227\223\179:\227\f\252\209','\190\221\26\162y\136'),CurrentValue=false,Callback=function(na)
+    Da=na
+    if not(na)then
+    else
+        R()
     end
 end};
-nb:CreateSlider{Name=D('e\27\228\228\170W\15\234\249\161','$|\131\150\207'),Range={0,100},Increment=5,CurrentValue=N.aggression,Callback=function(z)
-    N.aggression=z
+Ha:CreateSlider{Name=hb('\18\150C]1 \130M@:','S\241$/T'),Range={0,100},Increment=5,CurrentValue=W.aggression,Callback=function(r_)
+    W.aggression=r_
 end};
-nb:CreateSlider{Name=D('(\128\6\201\53\237\239\4\144H\193\28\251\170','e\233h\233q\136\131'),Range={10,500},Increment=5,CurrentValue=N.minDelay,Callback=function(y)
-    N.minDelay=y
+Ha:CreateSlider{Name=hb('\196\185v\184\162\203\208\232\169\56\176\139\221\149','\137\208\24\152\230\174\188'),Range={10,500},Increment=5,CurrentValue=W.minDelay,Callback=function(Ca)
+    W.minDelay=Ca
 end};
-nb:CreateSlider{Name=D('\237\182\251A\192B\4\193\174\163I\233TA',"\160\215\131a\132\'h"),Range={100,1000},Increment=5,CurrentValue=N.maxDelay,Callback=function(xb)
-    N.maxDelay=xb
+Ha:CreateSlider{Name=hb('\234\237\195\194s\141\212\198\245\155\202Z\155\145','\167\140\187\226\55\232\184'),Range={100,1000},Increment=5,CurrentValue=W.maxDelay,Callback=function(oa)
+    W.maxDelay=oa
 end};
-nb:CreateSlider{Name=D('\212-\191#\184\191\f\253d\157f\129\183\n\241','\153D\209\3\239\208~'),Range={1,2},Increment=1,CurrentValue=N.minLength,Callback=function(ob)
-    N.minLength=ob
+Ha:CreateSlider{Name=hb('Bg\228\195\184\n@k.\198\134\129\2Fg','\15\14\138\227\239e2'),Range={1,2},Increment=1,CurrentValue=W.minLength,Callback=function(Ua)
+    W.minLength=Ua
 end};
-nb:CreateSlider{Name=D("\169b\172\160\196/2\128#\152\229\253\'\52\140",'\228\3\212\128\147@@'),Range={5,20},Increment=1,CurrentValue=N.maxLength,Callback=function(U)
-    N.maxLength=U
+Ha:CreateSlider{Name=hb('qy0v\131\208sX8\4\51\186\216uT','<\24HV\212\191\1'),Range={5,20},Increment=1,CurrentValue=W.maxLength,Callback=function(q)
+    W.maxLength=q
 end};
-za=nb:CreateDropdown{Name=D('Q\206\1\18\nS\210\22\18Y','\4\189dv*'),Options={},CurrentOption={},MultipleOptions=false,Flag=D('\238\195\175\128\rP\195\136\200\244\184\139*[\222\155\213','\187\176\202\228Z?\177\236'),Callback=function()
+ca=Ha:CreateDropdown{Name=hb('.\128\165Q;,\156\178Qh','{\243\192\53\27'),Options={},CurrentOption={},MultipleOptions=false,Flag=hb('\250\186\199\177C\131\54\227\220\141\208\186d\136+\240\193','\175\201\162\213\20\236D\135'),Callback=function()
 end}
-local p=nb:CreateParagraph{Title=D('\185\210\247\158\211\229','\234\166\150'),Content=D('x\159\166\170QR\157\189\241\17\27','5\250\200\223?')}
-local function hb()
-    if not w_ then
-        p:Set{Title=D('{=S\\<A','(I2'),Content=D('\234zz|=\r\199\240q\19\57\251\198pzv3\r\207\185\56R.\251\138','\167\27\14\31U-\179\153\21rR\219')}
+local Bb=Ha:CreateParagraph{Title=hb(',*O\v+]','\127^.'),Content=hb('\226\131}\v\215\200\129fP\151\129','\175\230\19~\185')}
+local function Ma()
+    if not H then
+        Bb:Set{Title=hb('|\136I[\137[','/\252('),Content=hb('>\224\133\215>\160\51\233\2\224\0d\18\234\133\221\48\160;\160K\161\23d^','s\129\241\180V\128G\128f\129kD')}
         return
     end
-    local Va=nil
-    for va,ta in pairs(pa)do
-        if ta.Current and ta.Current.Billboard and ta.Current.Billboard.Parent then
-            Va=ta.Current.Player
+    local h=nil
+    for nb,Va in pairs(e_)do
+        if Va.Current and Va.Current.Billboard and Va.Current.Billboard.Parent then
+            h=Va.Current.Player
             break
         end
     end
-    local Pa,Ja='',''
-    if not(K)then
-        if not(Va)then
-            for Q,Ka in pairs(pa)do
-                local Ia=Sa(Q)
-                if Ia and Ia~=g then
-                    Pa=Ia.Name;
-                    Ja=D('b\142@D\201}p\166\15\140G]\206hv\189\15','/\235.1\167\26\23\211')..Ia.Name
-                    break
+    local V,O='',''
+    if t_ then
+        V=hb('\f\211)\220','M\189');
+        O=hb('\182N\199\173\25\207\159\a\234\170\15\207',"\241\'\171\196k\174")
+    elseif h then
+        V=h.Name;
+        O=hb('5\r\210\140\0\5\208\197','rd\190\229')..h.Name
+    else
+        for N,_b in pairs(e_)do
+            local ia=E(N)
+            if not(ia and ia~=fb)then
+            else
+                V=ia.Name;
+                O=hb('\174\0\50\142\252\169FJ\195\2\53\151\251\188@Q\195','\227e\\\251\146\206!?')..ia.Name
+                break
+            end
+        end
+        if not(V=='')then
+        else
+            V=hb('\217','\244');
+            O=hb('\22\218M\206\228<\216V\149\164u','[\191#\187\138')
+        end
+    end
+    local pb=(Wa~=''and Wa)or hb('\247','\218')
+    local bb=V..hb('\208\140\208','\240')..O..hb(')u)','\t')..pb;
+    Bb:Set{Title=hb('z*P]+B',')^1'),Content=bb}
+end
+local Pa,g=Ab:CreateTab(hb('\192\3\238\20\245','\129a')),{};
+g.Title=hb('.?\196\169G\202\175\233\14q\241\165G\206\190\238','gQ\162\198\53\167\206\154');
+g.Content=hb(ab'SqVAIAWhvDNsTWy8jqSjlUsE8bOvd9cl2OI45mM7RsfL+gauh4e6/fonlnfitu4I2v08xOhdZnUkOyJEdLNYYqNAb2yEuShjIkmwnd3A2wNXsejWNdpqi+cj6WsgXpfElWChnIDos7IDw2rj8vEK3vd1weMTZX0pbzxEaLZGcg==',ab'C9A0TyXq3UcNRzrZ/NfKr2s234OlFa4Fq4NChxFaJ6az8EDH8/LIx9pm4wONlp5ku4QcoI0zARRKG1UrBtc0');
+Pa:CreateParagraph(g)
+local L={};
+L.Title=hb('\14\202@\127G\vi\144.\132s\96Q\a|\134','G\164&\16\53f\b\227');
+L.Content=hb(ab'fuhDBQQlGF9mWmo0orTNrF9POkVsGhM4vpuQF41bJJ9mw+tP/7ar4+iA8gKzeBiMuM9gpl8FRTQcVTFcanPJ+J+sdkUiRXsQQSGz3N8JzE0rlTSKoliB9+G23cn4DrxzTIKgww==',ab'QMgwcWVHdDpGNQQUw9ihjDsqTCwPfzNI3bv/Za06SvsUrIIr9ZaVw67pimvdHzjrzaY=');
+Pa:CreateParagraph(L)
+local ra={};
+ra.Title=hb('\205\178\2g\162ZK\224\180\23s\236kO\224','\142\211p\6\130\n.');
+ra.Content=hb(ab'xvtk4ecQjzHFQkNy+4W4PhQ7AaSn1HbAbnHsOr7Jfh3RHfNaTHSQEyvQRyBT1IbG8aoBMYTfd46sKZM7z0oNIuqYsjgRMECL2JQ36g88vhK6yCxc3hnxG1ogmx8khE80AdyQwe2iAjGV',ab'99VEoIxk5leuIy1Sj+rfWXheIeXSoBnKXF/Me8q8DD21eJ87NVT0ckXwJkchsfWvh8N1UA==');
+Pa:CreateParagraph(ra)
+local Za={};
+Za.Title=hb('\181\141\56\151\152-\152','\246\236L');
+Za.Content=hb(ab'tbsMq+bvN8UmTmDfCJ5K2r3CDMbYc3egvYyxHv/u4DeLY1d93h/ZGdDy0xmHyH93xZaB',ab'5dp/34+EVqsGJQ+xbfU5s52xeKe6Ghuq9w==');
+Pa:CreateParagraph(Za)
+local function i_(rb,C)
+    if not(rb==hb('{\228G\168\150I\248K\183\142a','(\140(\223\219'))then
+        if not(rb==hb('#O\161&\144\nR\166+\136\"','k&\197C\221'))then
+            if rb==hb('\128\15C\147\167/W\147\189','\211{\"\225')then
+                t_=true
+                if not(Da)then
+                else
+                    R()
                 end
+                Ma()
+            elseif rb==hb('&\208]7\203K\r','c\190\57')then
+                t_=false;
+                Ma()
+            elseif not(rb==hb('\222\151\129\138^\22\186a\171\253\130\151\167O\a\157a\171','\139\231\229\235*s\233\4\217'))then
+            else
+                Wa=C or'';
+                Ma()
             end
-            if Pa==''then
-                Pa=D('\137','\164');
-                Ja=D('\145Q\155I4\187S\128\18t\242','\220\52\245<Z')
-            end
         else
-            Pa=Va.Name;
-            Ja=D('\"\170)\204\23\162+\133','e\195E\165')..Va.Name
+            H=false;
+            t_=false;
+            Wa='';
+            La();
+            e_={};
+            Ma()
         end
     else
-        Pa=D('p\3U\f','1m');
-        Ja=D("s\20\54 \255\31Z]\27\'\233\31",'4}ZI\141~')
-    end
-    local Wa=(ib~=''and ib)or D('\179','\158')
-    local j=Pa..D('\129\221\129','\161')..Ja..D('s/s','S')..Wa;
-    p:Set{Title=D('C\3Gd\2U','\16w&'),Content=j}
-end
-local ya,ra=V:CreateTab(D('\141\164\163\179\184','\204\198')),{};
-ra.Title=D('\169=\25g\147:\173\50\137s,k\147>\188\53','\224S\127\b\225W\204A');
-ra.Content=D(ja'9I+49UNOs2i3OlFtW5R4wDSI0RC2fwO7J7Xd6MDpmfSHbPapYeVMP4sKEcTx/SkteK202TcoLBiAbjgewL0o3Im4uiprtnO4VXRhSO0bjnzbkUvPPQ70dLDG58jygaSIA5CmeuIeccMuRNnwuTYvfKf93DxmLxCNOiYe3Lg2zA==',ja'tfrMmmMF0hzWMAcIKecR+hS6/yC8HXqbVNSnibKI+JX/ZrDAFZA+BatLZLCe3VlBGdSUvVJGS3nuTk9xstlE');
-ya:CreateParagraph(ra)
-local P={};
-P.Title=D('2\133\195\t\171\ad\212\18\203\240\22\189\vq\194','{\235\165f\217j\5\167');
-P.Content=D(ja'K/1rD0vsMNMnGPEo/qFtDB1Y2BVQle8obkTtmfZTZoye6fjLZEtvzw3Eh/3oO5iyktk1s3cPCv002XAe8W+V7T8MNFLAFUefvTFjA6KHt0VphsygsdwaCiWaOI2N8ecwzLyK1Q==',ja'Fd0YeyqOXLYHd58In80BLHk9rnwz8M9YDWSC69YyCOjshpGvbmtR70ut/5SGXLjV57A=');
-ya:CreateParagraph(P)
-local F={};
-F.Title=D('\5\25$\145.9\145(\31\49\133\96\b\149(','FxV\240\14i\244');
-F.Content=D(ja'C6BcXMTywz/3PTeQe2BFsOW5wjvlBwR/78m8Npk84qMx7fleYIrZ/9FTWYWpC/XqBMiKhUmETzOPy981/TV5wGp9T7bgsoMUmkdFVY6E7h6dPbDiPun7H3be0vPeB1GR+wPj7RjAiYVY',ja'Oo58Ha+GqlmcXFmwDw8i14nc4nqQc2t13eecd+1JkINViJU/Gaq9nr9zOOLbboaDcqH+5A==');
-ya:CreateParagraph(F)
-local wb={};
-wb.Title=D('U\0Bw\21Wx','\22a6');
-wb.Content=D(ja'52rLcLYaFhzz7qlZ+hr3+2mSvw775coHBN5g2SS+FRZStve0WO1dpPEmg6pP6+nKYi/T',ja'twu4BN9xd3LThcY3n3GEkknhy2+ZjKYNTg==');
-ya:CreateParagraph(wb)
-local function db(ia,W)
-    if ia==D('\239\168\240/<\221\180\252\48$\245','\188\192\159Xq')then
-        w_=true;
-        K=false;
-        yb();
-        ab();
-        hb()
-    elseif ia==D('\143\153\17\137\194\166\132\22\132\218\142','\199\240u\236\143')then
-        w_=false;
-        K=false;
-        ib='';
-        yb();
-        pa={};
-        hb()
-    elseif not(ia==D('\225^B\154\198~V\154\220','\178*#\232'))then
-        if ia==D('\162\158Q\179\133G\137','\231\240\53')then
-            K=false;
-            hb()
-        elseif not(ia==D('\163\230\208\241\198\167\227\b^\128\243\198\220\215\182\196\b^','\246\150\180\144\178\194\176m,'))then
-        else
-            ib=W or'';
-            hb()
-        end
-    else
-        K=true
-        if not(f_)then
-        else
-            Na()
-        end
-        hb()
+        H=true;
+        t_=false;
+        La();
+        Cb();
+        Ma()
     end
 end
-local function rb(fb)
-    if not(w_ and not K)then
-    else
-        s_=fb or''
+local function w_(X)
+    if H and not t_ then
+        jb=X or''
     end
 end
-local function v(qb)
-    if not(qb)then
+local function ta(ka)
+    if not(ka)then
     else
-        I(qb)
-        if f_ and w_ and K then
-            mb();
-            Na()
+        Qa(ka)
+        if Da and H and t_ then
+            Z();
+            R()
         end
     end
 end
-pb.OnClientEvent:Connect(function(Db)
-    print(D('\f\236\237(\25No\214\206\31{Zd>=\185h\205\198\t;\6&\241\192Z5c\96\54\48\230','H\169\175}^tO\156\161v\21\14\5\\Q\220'),Db);
-    Ta=Db;
-    ab();
-    hb()
+o_.OnClientEvent:Connect(function(Ta)
+    a_=Ta;
+    Cb();
+    Ma()
 end);
-lb.OnClientEvent:Connect(function()
-    print(D('\201\147P/\20\163\245@\135\203\224\21>L\"\v\158R\26e\138<\255\191\127\27\127\185\184i\140\195\248\23\rL,\f\154\28^a\155\51\236','\141\214\18zS\153\213\f\226\170\150pj-@g\251r~\f\254Y'));
-    Ta=nil;
-    w_=false;
-    K=false;
-    ib='';
-    yb();
-    pa={};
-    hb()
+f_.OnClientEvent:Connect(function()
+    a_=nil;
+    H=false;
+    t_=false;
+    Wa='';
+    La();
+    e_={};
+    Ma()
 end);
-d_.OnClientEvent:Connect(db);
-Eb.OnClientEvent:Connect(rb);
-Ua.OnClientEvent:Connect(v);
+G.OnClientEvent:Connect(i_);
+ua.OnClientEvent:Connect(w_);
+ea.OnClientEvent:Connect(ta);
 task.spawn(function()
     while true do
-        if w_ then
-            hb()
+        if not(H)then
+        else
+            Ma()
         end
         task.wait(0.29999999999999999)
     end
 end);
-print(D('\153}\29\241\178\135}tS\142\130%U\200\0\186\220\225ev\143:\148wi\244\221\138lpX\236\151%E\200\4\189\192\245\16x\150*','\216\51I\184\146\203(5\28\204\196p\6\139A\238\147\179E4\218s'))
+print(hb('\175\253\181\193>\207h\223f\21:\176\27\243J*u\219\190\224\211\180\162\247\193\196Q\194y\219mw/\176\v\243N-i\207\203\238\202\164','\238\179\225\136\30\131=\158)W|\229H\176\v~:\137\158\162\134\253'))
