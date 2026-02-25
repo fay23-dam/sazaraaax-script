@@ -1,9 +1,34 @@
--- =========================================================
--- ULTRA SMART AUTO KATA (RAYFIELD EDITION - FIXED STABLE)
--- =========================================================
 
 local DEBUG_MODE = true
-local SCRIPT_VERSION = "2.1.4"
+local SCRIPT_VERSION = "2.2.0"
+
+-- ================================
+-- LOADING SCREEN (CENTER TEXT)
+-- ================================
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local loadingGui = Instance.new("ScreenGui")
+loadingGui.Name = "SK_Loading"
+loadingGui.ResetOnSpawn = false
+loadingGui.IgnoreGuiInset = true
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1,0,1,0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextScaled = true
+textLabel.TextColor3 = Color3.fromRGB(255,255,255)
+textLabel.Font = Enum.Font.GothamBold
+textLabel.Text = "Loading Sambung-Kata..."
+textLabel.Parent = loadingGui
+
+loadingGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local function removeLoading()
+    if loadingGui then
+        loadingGui:Destroy()
+    end
+end
 
 -- ================================
 -- UTIL
@@ -24,127 +49,117 @@ local function log(...)
 end
 
 local function logError(msg, err)
-    warn("[SambungKata] ❌ ERROR: "..tostring(msg))
-    if err then warn("[SambungKata] Details: "..tostring(err)) end
+    warn("[SambungKata] ❌ "..tostring(msg))
+    if err then warn("[SambungKata] Details:", err) end
 end
 
 -- ================================
--- PLATFORM
+-- SAFE WAIT FUNCTION (MOBILE FIX)
 -- ================================
-local UIS = game:GetService("UserInputService")
-local function getPlatformName()
-    local success, platform = pcall(function()
-        return UIS:GetPlatform()
-    end)
-    if success then
-        return tostring(platform)
-    end
-    return "PC"
-end
+local function waitForReplicatedChild(parent, name, timeout)
+    timeout = timeout or 60
+    local start = tick()
 
-local CURRENT_PLATFORM = getPlatformName()
-log("Platform:", CURRENT_PLATFORM)
-
--- ================================
--- SAFE NOTIFY
--- ================================
-local function safeNotify(title, text, duration)
-    duration = duration or 5
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "[SambungKata] "..title,
-            Text = text,
-            Duration = duration
-        })
-    end)
-end
-
--- ================================
--- LOAD RAYFIELD
--- ================================
-local function loadRayfieldLibrary()
-    log("Loading Rayfield...")
-
-    local urls = {
-        "https://sirius.menu/rayfield",
-        "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source"
-    }
-
-    for _, url in ipairs(urls) do
-        local success, result = pcall(function()
-            return game:HttpGet(trim(url), true)
-        end)
-
-        if success and result and #result > 100 then
-            local compileSuccess, chunk = pcall(loadstring, result)
-            if compileSuccess and chunk then
-                local execSuccess, lib = pcall(chunk)
-                if execSuccess and type(lib) == "table" then
-                    log("Rayfield loaded from:", url)
-                    return lib
-                end
-            end
+    while tick() - start < timeout do
+        local obj = parent:FindFirstChild(name)
+        if obj then
+            return obj
         end
+        task.wait(1)
     end
 
     return nil
 end
 
 -- ================================
--- MAIN
+-- START
 -- ================================
 task.defer(function()
 
-    log("Script v"..SCRIPT_VERSION.." started")
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
 
-    local Rayfield = loadRayfieldLibrary()
+    task.wait(2) -- mobile safety delay
+
+    local UIS = game:GetService("UserInputService")
+    local RS = game:GetService("ReplicatedStorage")
+
+    -- ================================
+    -- LOAD RAYFIELD
+    -- ================================
+    local function loadRayfield()
+        local urls = {
+            "https://sirius.menu/rayfield",
+            "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source"
+        }
+
+        for _, url in ipairs(urls) do
+            local success, result = pcall(function()
+                return game:HttpGet(trim(url), true)
+            end)
+
+            if success and result and #result > 100 then
+                local compileSuccess, chunk = pcall(loadstring, result)
+                if compileSuccess and chunk then
+                    local execSuccess, lib = pcall(chunk)
+                    if execSuccess and type(lib) == "table" then
+                        return lib
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local Rayfield = loadRayfield()
     if not Rayfield then
         logError("Failed load Rayfield")
+        removeLoading()
         return
     end
 
-    -- PLAYER
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    if not LocalPlayer then return end
+    -- ================================
+    -- SAFE WORDLIST LOAD
+    -- ================================
+    textLabel.Text = "Loading WordList..."
 
-    if not LocalPlayer.Character then
-        LocalPlayer.CharacterAdded:Wait()
-    end
-
-    LocalPlayer.Character:WaitForChild("HumanoidRootPart", 15)
-
-    -- SERVICES
-    local RS = game:GetService("ReplicatedStorage")
-
-    -- WORDLIST
-    local wordList = RS:WaitForChild("WordList", 20)
+    local wordList = waitForReplicatedChild(RS, "WordList", 60)
     if not wordList then
         logError("WordList not found")
+        textLabel.Text = "WordList not found!\nRejoin game."
+        task.wait(5)
+        removeLoading()
         return
     end
 
     local kataModule
     do
         local success, result = pcall(function()
-            local mod = wordList:WaitForChild("IndonesianWords", 15)
-            return require(mod)
+            local mod = waitForReplicatedChild(wordList, "IndonesianWords", 30)
+            if mod then
+                return require(mod)
+            end
         end)
 
         if success and type(result) == "table" then
             kataModule = result
         else
-            logError("Failed require IndonesianWords", result)
+            logError("Failed require IndonesianWords")
+            removeLoading()
             return
         end
     end
 
-    log("Words loaded:", #kataModule)
-
+    -- ================================
     -- REMOTES
-    local remotes = RS:WaitForChild("Remotes", 15)
+    -- ================================
+    textLabel.Text = "Loading Remotes..."
+
+    local remotes = waitForReplicatedChild(RS, "Remotes", 60)
     if not remotes then
-        logError("Remotes missing")
+        logError("Remotes not found")
+        removeLoading()
         return
     end
 
@@ -158,11 +173,6 @@ task.defer(function()
     local BillboardEnd = getRemote("BillboardEnd")
     local TypeSound = getRemote("TypeSound")
     local UsedWordWarn = getRemote("UsedWordWarn")
-
-    if not MatchUI or not SubmitWord then
-        logError("Critical remotes missing")
-        return
-    end
 
     -- ================================
     -- STATE
@@ -188,19 +198,11 @@ task.defer(function()
         return usedWords[string.lower(word)] == true
     end
 
-    local usedWordsDropdown
-    local statusParagraph
-
     local function addUsedWord(word)
         local w = string.lower(word)
         if not usedWords[w] then
             usedWords[w] = true
             table.insert(usedWordsList, word)
-            if usedWordsDropdown then
-                pcall(function()
-                    usedWordsDropdown:Set(usedWordsList)
-                end)
-            end
         end
     end
 
@@ -220,7 +222,7 @@ task.defer(function()
             end
         end
 
-        table.sort(results, function(a, b)
+        table.sort(results, function(a,b)
             return #a > #b
         end)
 
@@ -228,12 +230,9 @@ task.defer(function()
     end
 
     local function humanDelay()
-        task.wait(math.random(config.minDelay, config.maxDelay) / 1000)
+        task.wait(math.random(config.minDelay, config.maxDelay)/1000)
     end
 
-    -- ================================
-    -- AI
-    -- ================================
     local function startUltraAI()
         if autoRunning or not autoEnabled or not matchActive or not isMyTurn or serverLetter == "" then
             return
@@ -251,26 +250,25 @@ task.defer(function()
             end
 
             local selectedWord
-
             if config.aggression >= 100 then
                 selectedWord = words[1]
             elseif config.aggression <= 0 then
-                selectedWord = words[math.random(1, #words)]
+                selectedWord = words[math.random(1,#words)]
             else
                 local topN = math.max(1, math.floor(#words * (1 - config.aggression/100)))
-                selectedWord = words[math.random(1, math.min(topN, #words))]
+                selectedWord = words[math.random(1, math.min(topN,#words))]
             end
 
             local currentWord = serverLetter
             local remain = selectedWord:sub(#serverLetter + 1)
 
-            for i = 1, #remain do
+            for i=1,#remain do
                 if not matchActive or not isMyTurn then
                     autoRunning = false
                     return
                 end
 
-                currentWord = currentWord .. remain:sub(i, i)
+                currentWord = currentWord .. remain:sub(i,i)
 
                 if TypeSound then
                     pcall(function() TypeSound:FireServer() end)
@@ -302,26 +300,16 @@ task.defer(function()
     end
 
     -- ================================
-    -- UI (FIXED)
+    -- UI
     -- ================================
-    log("Creating UI...")
+    textLabel.Text = "Creating UI..."
 
-    local Window
-    local success, result = pcall(function()
-        return Rayfield:CreateWindow({
-            Name = "Sambung-Kata v"..SCRIPT_VERSION,
-            LoadingTitle = "Loading...",
-            LoadingSubtitle = "Stable Edition",
-            ConfigurationSaving = {Enabled = false}
-        })
-    end)
-
-    if success and result then
-        Window = result
-    else
-        logError("UI creation failed", result)
-        return
-    end
+    local Window = Rayfield:CreateWindow({
+        Name = "Sambung-Kata v"..SCRIPT_VERSION,
+        LoadingTitle = "Loading...",
+        LoadingSubtitle = "Mobile Stable",
+        ConfigurationSaving = {Enabled = false}
+    })
 
     local MainTab = Window:CreateTab("Main")
 
@@ -335,8 +323,32 @@ task.defer(function()
     })
 
     MainTab:CreateSlider({
+        Name = "Min Word Length",
+        Range = {2,30},
+        Increment = 1,
+        CurrentValue = config.minLength,
+        Callback = function(v) config.minLength = v end
+    })
+
+    MainTab:CreateSlider({
+        Name = "Max Word Length",
+        Range = {3,50},
+        Increment = 1,
+        CurrentValue = config.maxLength,
+        Callback = function(v) config.maxLength = v end
+    })
+
+    MainTab:CreateSlider({
+        Name = "Aggression %",
+        Range = {0,100},
+        Increment = 5,
+        CurrentValue = config.aggression,
+        Callback = function(v) config.aggression = v end
+    })
+
+    MainTab:CreateSlider({
         Name = "Min Delay (ms)",
-        Range = {10, 500},
+        Range = {10,500},
         Increment = 5,
         CurrentValue = config.minDelay,
         Callback = function(v) config.minDelay = v end
@@ -344,121 +356,14 @@ task.defer(function()
 
     MainTab:CreateSlider({
         Name = "Max Delay (ms)",
-        Range = {20, 1000},
+        Range = {20,1000},
         Increment = 5,
         CurrentValue = config.maxDelay,
         Callback = function(v) config.maxDelay = v end
     })
 
-    MainTab:CreateSlider({
-        Name = "Aggression %",
-        Range = {0, 100},
-        Increment = 5,
-        CurrentValue = config.aggression,
-        Callback = function(v) config.aggression = v end
-    })
-        MainTab:CreateSlider({
-        Name = "Min Word Length",
-        Range = {2, 30},
-        Increment = 1,
-        CurrentValue = config.minLength,
-        Callback = function(v)
-            config.minLength = v
-        end
-    })
-
-    MainTab:CreateSlider({
-        Name = "Max Word Length",
-        Range = {3, 50},
-        Increment = 1,
-        CurrentValue = config.maxLength,
-        Callback = function(v)
-            config.maxLength = v
-        end
-    })
-
-    usedWordsDropdown = MainTab:CreateDropdown({
-        Name = "Used Words",
-        Options = {},
-        CurrentOption = "",
-        Callback = function() end
-    })
-
-    statusParagraph = MainTab:CreateParagraph({
-        Title = "Status",
-        Content = "Idle"
-    })
-
-    -- ================================
-    -- REMOTE EVENTS
-    -- ================================
-    MatchUI.OnClientEvent:Connect(function(cmd, value)
-
-        if cmd == "ShowMatchUI" then
-            matchActive = true
-            isMyTurn = false
-            usedWords = {}
-            usedWordsList = {}
-            if usedWordsDropdown then
-                usedWordsDropdown:Set({})
-            end
-
-        elseif cmd == "HideMatchUI" then
-            matchActive = false
-            isMyTurn = false
-            serverLetter = ""
-            usedWords = {}
-            usedWordsList = {}
-            if usedWordsDropdown then
-                usedWordsDropdown:Set({})
-            end
-
-        elseif cmd == "StartTurn" then
-            if opponentStreamWord ~= "" then
-                addUsedWord(opponentStreamWord)
-                opponentStreamWord = ""
-            end
-            isMyTurn = true
-            if autoEnabled then startUltraAI() end
-
-        elseif cmd == "EndTurn" then
-            isMyTurn = false
-
-        elseif cmd == "UpdateServerLetter" then
-            serverLetter = value or ""
-        end
-
-        if statusParagraph then
-            statusParagraph:Set({
-                Title = "Status",
-                Content = "Match: "..(matchActive and "ON" or "OFF")..
-                    " | Turn: "..(isMyTurn and "YOU" or "OPP")..
-                    " | Letter: "..(serverLetter ~= "" and serverLetter or "-")
-            })
-        end
-    end)
-
-    if BillboardUpdate then
-        BillboardUpdate.OnClientEvent:Connect(function(word)
-            if matchActive and not isMyTurn then
-                opponentStreamWord = word or ""
-            end
-        end)
-    end
-
-    if UsedWordWarn then
-        UsedWordWarn.OnClientEvent:Connect(function(word)
-            if word then
-                addUsedWord(word)
-                if autoEnabled and matchActive and isMyTurn then
-                    task.wait(0.5)
-                    startUltraAI()
-                end
-            end
-        end)
-    end
+    removeLoading()
 
     log("Initialization complete")
-    safeNotify("Ready", "Sambung-Kata Auto Loaded", 4)
 
 end)
