@@ -238,7 +238,7 @@ end
 local Window = Rayfield:CreateWindow({
     Name = "Sambung-kata",
     LoadingTitle = "Loading Gui...",
-    LoadingSubtitle = "Anti LuaObfuscator Build",
+    LoadingSubtitle = "automate by sazaraaax",
     ConfigurationSaving = {Enabled = false}
 })
 
