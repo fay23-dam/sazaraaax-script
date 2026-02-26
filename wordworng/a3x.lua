@@ -1,1 +1,1 @@
-return { "atlaut", "karwemusbo", "bipim", "iapetus", "wilalo", "smea", "huncali", "osteotomi", "linduan" }
+return { "atlaut", "karwemusbo", "bipim", "iapetus", "wilalo", "smea", "huncali", "osteotomi", "linduan", "ikapi", "iain", "ahuneyo", "alimbuane", "atalat", "kanape", "autokratik", "licia", "asahehe", "anoksemia", "anakalang", "maduratna", "rapbn", "waina", "batarang", "mungkiren", "yahadian", "idai", "nufur", "kadai" }
