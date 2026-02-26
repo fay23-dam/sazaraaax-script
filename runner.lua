@@ -18,14 +18,14 @@ if not player then return end
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Destroy old if exists
-local old = playerGui:FindFirstChild("SazaraaaxClean")
+local old = playerGui:FindFirstChild("SazaraaaxUltra")
 if old then
     old:Destroy()
 end
 
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "SazaraaaxClean"
+gui.Name = "SazaraaaxUltra"
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
