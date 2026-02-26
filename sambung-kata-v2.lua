@@ -136,11 +136,11 @@ local function downloadWordlist()
         if type(word) == "string" then
             local w = string.lower(word)
 
-            -- ✅ FILTER LENGKAP
-            if string.len(w) > 1
-                and not seen[w]
-                and not string.find(w, "%-") -- ❌ tidak boleh ada "-"
-                and not wrongWordsSet[w] then -- ❌ tidak termasuk wrong words
+            -- ✅ FILTER SUPER BERSIH
+            if not seen[w]
+                and not wrongWordsSet[w]
+                and string.len(w) > 1
+                and w:match("^[a-z]+$") then -- ⬅ hanya huruf a-z
 
                 seen[w] = true
                 uniqueWords[#uniqueWords + 1] = w
@@ -245,7 +245,7 @@ local autoRunning = false
 local lastAttemptedWord = ""
 
 -- Timeout inactivity (detik)
-local INACTIVITY_TIMEOUT = 2
+local INACTIVITY_TIMEOUT = 6
 local lastTurnActivity = 0
 
 local config = {
@@ -1035,8 +1035,8 @@ end
 -- ABOUT TAB
 -- =========================
 local AboutTab = Window:CreateTab("About")
-AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.7\nby sazaraaax\nFitur: Auto play, fallback panjang, filter wrong word, kirim ke Discord, auto retry saat diam, save/load config, cache wordlist\n\nthanks to danzzy1we for the indonesian dictionary" })
-AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Deteksi otomatis salah kata & coba ulang\n> Fallback panjang kata\n> Filter kata salah dari wordlist eksternal\n> Inactivity timeout (2 detik)\n> Kirim notifikasi Discord via webhook\n> Tab Player dengan save/load config\n> Wordlist dimuat asinkron + cache\n> Perbaikan error nil indeks" })
+AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.0\nby sazaraaax\nFitur: Auto play, Select Word, save/load config \nthanks to danzzy1we for the indonesian dictionary" })
+AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Tab Player dengan save/load config\n> Wordlist dimuat asinkron + cache\n> tidak menggunakan - " })
 AboutTab:CreateParagraph({ Title = "Cara Penggunaan", Content = "1. Aktifkan toggle Auto\n2. Atur delay, agresivitas, dan panjang kata\n3. Mulai permainan\n4. Script akan otomatis menjawab" })
 AboutTab:CreateParagraph({ Title = "Catatan", Content = "Pastikan koneksi stabil\nJika ada error, coba reload" })
 
@@ -1199,7 +1199,6 @@ RunService.Heartbeat:Connect(function()
         if not isMyTurn then
             isMyTurn = true
             lastTurnActivity = tick()
-            print("✅ Deteksi giliran sendiri: isMyTurn = true")
             if serverLetter == "" and #text > 0 then
                 serverLetter = string.sub(text, 1, 1)
                 print("📝 serverLetter diambil dari billboard:", serverLetter)
@@ -1219,7 +1218,6 @@ RunService.Heartbeat:Connect(function()
     else
         if isMyTurn then
             isMyTurn = false
-            print("❌ Deteksi giliran sendiri: isMyTurn = false")
             updateMainStatus()
             updateWordButtons()
         end
@@ -1227,7 +1225,6 @@ RunService.Heartbeat:Connect(function()
 
     if matchActive and isMyTurn and autoEnabled and not autoRunning then
         if tick() - lastTurnActivity > INACTIVITY_TIMEOUT then
-            print("⏰ Inactivity timeout, mencoba auto lagi")
             lastTurnActivity = tick()
             startUltraAI()
         end
