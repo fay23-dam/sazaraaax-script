@@ -53,7 +53,13 @@ local ReplicatedStorage = GetService(game, "ReplicatedStorage")
 local Players = GetService(game, "Players")
 local RunService = GetService(game, "RunService")
 local Workspace = GetService(game, "Workspace")
+local HttpService = GetService(game, "HttpService")
 local LocalPlayer = Players.LocalPlayer
+
+-- =========================
+-- DISCORD WEBHOOK
+-- =========================
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476646985879519393/r6FF_Sn2y3C7qm-CkddLqeim28pTL58PnnWQaN0Ttb7kOq1CirWJwqQJntqYVFdb9qGn"
 
 -- =========================
 -- LOAD WORDLIST
@@ -105,8 +111,46 @@ if not wordOk or #kataModule == 0 then
 end
 
 print("Wordlist Loaded:", #kataModule)
+-- =========================
+-- LOAD WRONG WORDLIST
+-- =========================
+local wrongWordsSet = {}  -- untuk lookup cepat
+local function downloadWrongWordlist()
+    local url = "https://raw.githubusercontent.com/fay23-dam/sazaraaax-script/refs/heads/main/wordworng/a3x.lua"
+    local response = httpget(game, url)
+    if not response then
+        warn("Gagal ambil wrong wordlist")
+        return false
+    end
 
--- Indeks berdasarkan huruf pertama
+    local loadFunc, err = loadstring(response)
+    if not loadFunc then
+        warn("Gagal parse wrong wordlist: " .. tostring(err))
+        return false
+    end
+
+    local words = loadFunc()
+    if type(words) ~= "table" then
+        warn("Wrong wordlist bukan tabel")
+        return false
+    end
+
+    -- Lowercase dan jadikan set
+    for _, w in ipairs(words) do
+        wrongWordsSet[string.lower(w)] = true
+    end
+    return true
+end
+
+local wrongOk = downloadWrongWordlist()
+if not wrongOk then
+    warn("Wrong wordlist gagal dimuat, melanjutkan tanpa filter")
+    wrongWordsSet = {}
+else
+    print("Wrong words loaded:", #wrongWordsSet)
+end
+
+-- Indeks berdasarkan huruf pertama (dari kataModule)
 local wordsByFirstLetter = {}
 for _, word in ipairs(kataModule) do
     local first = string.sub(word, 1, 1)
@@ -128,8 +172,8 @@ local TypeSound = remotes:WaitForChild("TypeSound")
 local UsedWordWarn = remotes:WaitForChild("UsedWordWarn")
 local JoinTable = remotes:WaitForChild("JoinTable")
 local LeaveTable = remotes:WaitForChild("LeaveTable")
-local PlayerHit = remotes:WaitForChild("PlayerHit")      -- tambahan
-local PlayerCorrect = remotes:WaitForChild("PlayerCorrect") -- opsional
+local PlayerHit = remotes:WaitForChild("PlayerHit")
+local PlayerCorrect = remotes:WaitForChild("PlayerCorrect")
 
 -- =========================
 -- STATE
@@ -144,6 +188,13 @@ local opponentStreamWord = ""
 
 local autoEnabled = false
 local autoRunning = false
+
+-- Untuk mendeteksi kata terakhir yang dicoba (untuk Discord)
+local lastAttemptedWord = ""
+
+-- Timeout inactivity (detik)
+local INACTIVITY_TIMEOUT = 5
+local lastTurnActivity = 0
 
 local config = {
     minDelay = 350,
@@ -237,6 +288,65 @@ local function humanDelay()
     task.wait(math.random(min, max) / 1000)
 end
 
+-- Fungsi kirim pesan ke Discord via webhook
+local function sendDiscordHitMessage(word)
+    local message = "**Kata Salah!**\nPlayer: " .. LocalPlayer.Name .. "\nKata: " .. (word ~= "" and word or "tidak diketahui")
+    local data = {
+        content = message
+    }
+    local jsonData = HttpService:JSONEncode(data)
+    
+    -- Coba berbagai method request
+    local success = false
+    local errMsg = ""
+    
+    -- Method 1: syn.request (Synapse X, ScriptWare)
+    if syn and syn.request then
+        local response = syn.request({
+            Url = DISCORD_WEBHOOK,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = jsonData
+        })
+        if response and response.StatusCode == 204 then
+            success = true
+        else
+            errMsg = "syn.request failed: " .. tostring(response and response.StatusCode)
+        end
+    -- Method 2: http_request (some executors)
+    elseif http_request then
+        local response = http_request({
+            Url = DISCORD_WEBHOOK,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = jsonData
+        })
+        if response and response.StatusCode == 204 then
+            success = true
+        else
+            errMsg = "http_request failed: " .. tostring(response and response.StatusCode)
+        end
+    -- Method 3: HttpService:PostAsync (mungkin gagal karena tidak di whitelist)
+    else
+        local s, e = pcall(function()
+            HttpService:PostAsync(DISCORD_WEBHOOK, jsonData, Enum.HttpContentType.ApplicationJson, false)
+        end)
+        if s then
+            success = true
+        else
+            errMsg = "HttpService:PostAsync error: " .. tostring(e)
+        end
+    end
+    
+    if not success then
+        warn("Gagal kirim ke Discord:", errMsg)
+    end
+end
+
 -- =========================
 -- AUTO ENGINE
 -- =========================
@@ -248,6 +358,7 @@ local function startUltraAI()
     if serverLetter == "" then return end
 
     autoRunning = true
+    lastTurnActivity = tick()  -- reset inactivity timer
     humanDelay()
 
     local words = getSmartWords(serverLetter)
@@ -281,6 +392,7 @@ local function startUltraAI()
         humanDelay()
         SubmitWord:FireServer(selectedWord)
         addUsedWord(selectedWord)
+        lastAttemptedWord = selectedWord  -- simpan kata terakhir
     end)
 
     if not success then
@@ -359,71 +471,6 @@ local function setupSeatMonitoring()
     print("Memantau", #seatStates, "seat di meja", currentTableName)
 end
 
--- Heartbeat loop
-RunService.Heartbeat:Connect(function()
-    -- Pantau seat lawan
-    if matchActive and tableTarget and currentTableName then
-        for seat, state in pairs(seatStates) do
-            local plr = getSeatPlayer(seat)
-            if plr and plr ~= LocalPlayer then
-                if not state.Current or state.Current.Player ~= plr then
-                    state.Current = monitorTurnBillboard(plr)
-                end
-
-                if state.Current then
-                    local tb = state.Current.TextLabel
-                    if tb then
-                        state.Current.LastText = tb.Text
-                    end
-
-                    if not state.Current.Billboard or not state.Current.Billboard.Parent then
-                        if state.Current.LastText ~= "" then
-                            addUsedWord(state.Current.LastText)
-                        end
-                        state.Current = nil
-                    end
-                end
-            else
-                if state.Current then
-                    state.Current = nil
-                end
-            end
-        end
-    end
-
-    -- Deteksi giliran sendiri
-    local myBillboard = monitorTurnBillboard(LocalPlayer)
-    if myBillboard then
-        local text = myBillboard.TextLabel.Text
-        if not isMyTurn then
-            isMyTurn = true
-            print("✅ Deteksi giliran sendiri: isMyTurn = true")
-            if serverLetter == "" and #text > 0 then
-                serverLetter = string.sub(text, 1, 1)
-                print("📝 serverLetter diambil dari billboard:", serverLetter)
-            end
-            updateMainStatus()
-            updateWordButtons()
-            if autoEnabled and serverLetter ~= "" then
-                startUltraAI()
-            end
-        else
-            if #text > 0 and serverLetter == "" then
-                serverLetter = string.sub(text, 1, 1)
-                updateMainStatus()
-                updateWordButtons()
-            end
-        end
-    else
-        if isMyTurn then
-            isMyTurn = false
-            print("❌ Deteksi giliran sendiri: isMyTurn = false")
-            updateMainStatus()
-            updateWordButtons()
-        end
-    end
-end)
-
 -- Pantau atribut CurrentTable
 local function onCurrentTableChanged()
     local tableName = LocalPlayer:GetAttribute("CurrentTable")
@@ -445,7 +492,7 @@ end)
 onCurrentTableChanged()
 
 -- =========================
--- UI
+-- UI (bagian ini didefinisikan sebelum Heartbeat)
 -- =========================
 local Window = Rayfield:CreateWindow({
     Name = "Sambung-kata",
@@ -536,6 +583,8 @@ MainTab:CreateSlider({
         end
     end
 })
+
+-- Slider panjang kata
 MainTab:CreateSlider({
     Name = "Min Word Length",
     Range = {2, 20},
@@ -561,6 +610,7 @@ MainTab:CreateSlider({
         end
     end
 })
+
 usedWordsDropdown = MainTab:CreateDropdown({
     Name = "Used Words",
     Options = {},
@@ -575,6 +625,7 @@ local statusParagraph = MainTab:CreateParagraph({
     Content = "Menunggu..."
 })
 
+-- Fungsi update status (harus didefinisikan sebelum Heartbeat)
 local function updateMainStatus()
     if not matchActive then
         statusParagraph:Set({ Title = "Status", Content = "Match tidak aktif | - | -" })
@@ -623,7 +674,7 @@ local maxWordsToShow = 50
 local selectedWord = nil
 local wordDropdown = nil
 local submitButton = nil
-local updateWordButtons
+local updateWordButtons  -- forward declaration
 
 function updateWordButtons()
     if not wordDropdown then return end
@@ -723,6 +774,8 @@ submitButton = SelectTab:CreateButton({
         humanDelay()
         SubmitWord:FireServer(word)
         addUsedWord(word)
+        lastAttemptedWord = word
+        lastTurnActivity = tick()  -- reset inactivity
     end
 })
 
@@ -730,9 +783,9 @@ submitButton = SelectTab:CreateButton({
 -- TAB ABOUT
 -- =========================
 local AboutTab = Window:CreateTab("About")
-AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.1\nby sazaraaax\nFitur: Auto play dengan wordlist Indonesia, fallback panjang, deteksi salah kata\n\nthanks to danzzy1we for the indonesian dictionary" })
-AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Deteksi otomatis salah kata & coba ulang\n> Fallback panjang kata jika tidak ada dalam rentang\n> Monitoring lawan & status realtime" })
-AboutTab:CreateParagraph({ Title = "Cara Penggunaan", Content = "1. Aktifkan toggle Auto\n2. Atur delay dan agresivitas\n3. Mulai permainan\n4. Script akan otomatis menjawab" })
+AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.3\nby sazaraaax\nFitur: Auto play, fallback panjang, deteksi salah kata, kirim ke Discord, auto retry saat diam\n\nthanks to danzzy1we for the indonesian dictionary" })
+AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Deteksi otomatis salah kata & coba ulang\n> Fallback panjang kata\n> Inactivity timeout (2 detik)\n> Kirim notifikasi Discord via webhook" })
+AboutTab:CreateParagraph({ Title = "Cara Penggunaan", Content = "1. Aktifkan toggle Auto\n2. Atur delay, agresivitas, dan panjang kata\n3. Mulai permainan\n4. Script akan otomatis menjawab" })
 AboutTab:CreateParagraph({ Title = "Catatan", Content = "Pastikan koneksi stabil\nJika ada error, coba reload" })
 
 local discordLink = "https://discord.gg/bT4GmSFFWt"
@@ -781,6 +834,7 @@ local function onMatchUI(cmd, value)
         updateWordButtons()
     elseif cmd == "StartTurn" then
         isMyTurn = true
+        lastTurnActivity = tick()
         if autoEnabled then
             task.spawn(function()
                 task.wait(math.random(300,500) / 1000)
@@ -802,6 +856,7 @@ local function onMatchUI(cmd, value)
     elseif cmd == "Mistake" then
         -- value kemungkinan { userId = ..., count = ... }
         if value and value.userId == LocalPlayer.UserId then
+            sendDiscordHitMessage(lastAttemptedWord)
             task.wait(0.1)
             if autoEnabled and matchActive and isMyTurn then
                 startUltraAI()
@@ -828,9 +883,12 @@ end
 
 -- Deteksi salah kata via PlayerHit
 PlayerHit.OnClientEvent:Connect(function(player)
-    if player == LocalPlayer and autoEnabled and matchActive and isMyTurn then
-        task.wait(0.1)
-        startUltraAI()
+    if player == LocalPlayer then
+        sendDiscordHitMessage(lastAttemptedWord)
+        if autoEnabled and matchActive and isMyTurn then
+            task.wait(0.1)
+            startUltraAI()
+        end
     end
 end)
 
@@ -853,6 +911,83 @@ end)
 MatchUI.OnClientEvent:Connect(onMatchUI)
 BillboardUpdate.OnClientEvent:Connect(onBillboard)
 UsedWordWarn.OnClientEvent:Connect(onUsedWarn)
+
+-- =========================
+-- HEARTBEAT LOOP (diletakkan setelah semua fungsi terdefinisi)
+-- =========================
+RunService.Heartbeat:Connect(function()
+    -- Pantau seat lawan
+    if matchActive and tableTarget and currentTableName then
+        for seat, state in pairs(seatStates) do
+            local plr = getSeatPlayer(seat)
+            if plr and plr ~= LocalPlayer then
+                if not state.Current or state.Current.Player ~= plr then
+                    state.Current = monitorTurnBillboard(plr)
+                end
+
+                if state.Current then
+                    local tb = state.Current.TextLabel
+                    if tb then
+                        state.Current.LastText = tb.Text
+                    end
+
+                    if not state.Current.Billboard or not state.Current.Billboard.Parent then
+                        if state.Current.LastText ~= "" then
+                            addUsedWord(state.Current.LastText)
+                        end
+                        state.Current = nil
+                    end
+                end
+            else
+                if state.Current then
+                    state.Current = nil
+                end
+            end
+        end
+    end
+
+    -- Deteksi giliran sendiri
+    local myBillboard = monitorTurnBillboard(LocalPlayer)
+    if myBillboard then
+        local text = myBillboard.TextLabel.Text
+        if not isMyTurn then
+            isMyTurn = true
+            lastTurnActivity = tick()  -- reset inactivity timer
+            print("✅ Deteksi giliran sendiri: isMyTurn = true")
+            if serverLetter == "" and #text > 0 then
+                serverLetter = string.sub(text, 1, 1)
+                print("📝 serverLetter diambil dari billboard:", serverLetter)
+            end
+            updateMainStatus()
+            updateWordButtons()
+            if autoEnabled and serverLetter ~= "" then
+                startUltraAI()
+            end
+        else
+            if #text > 0 and serverLetter == "" then
+                serverLetter = string.sub(text, 1, 1)
+                updateMainStatus()
+                updateWordButtons()
+            end
+        end
+    else
+        if isMyTurn then
+            isMyTurn = false
+            print("❌ Deteksi giliran sendiri: isMyTurn = false")
+            updateMainStatus()
+            updateWordButtons()
+        end
+    end
+
+    -- Inactivity check: jika giliran sendiri, auto aktif, dan sudah > INACTIVITY_TIMEOUT detik sejak aktivitas terakhir, coba auto lagi
+    if matchActive and isMyTurn and autoEnabled and not autoRunning then
+        if tick() - lastTurnActivity > INACTIVITY_TIMEOUT then
+            print("⏰ Inactivity timeout, mencoba auto lagi")
+            lastTurnActivity = tick()  -- reset untuk menghindari loop
+            startUltraAI()
+        end
+    end
+end)
 
 -- Loop update status
 task.spawn(function()
