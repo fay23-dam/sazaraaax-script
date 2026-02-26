@@ -62,9 +62,10 @@ local LocalPlayer = Players.LocalPlayer
 local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476646985879519393/r6FF_Sn2y3C7qm-CkddLqeim28pTL58PnnWQaN0Ttb7kOq1CirWJwqQJntqYVFdb9qGn"
 
 -- =========================
--- LOAD WORDLIST
+-- LOAD WORDLIST & WRONG WORDLIST
 -- =========================
 local kataModule = {}
+local wrongWordsSet = {}
 
 local function downloadWordlist()
     local url = "https://raw.githubusercontent.com/danzzy1we/roblox-script-dump/refs/heads/main/WordListDump/withallcombination2.lua"
@@ -104,28 +105,18 @@ local function downloadWordlist()
     return true
 end
 
-local wordOk = downloadWordlist()
-if not wordOk or #kataModule == 0 then
-    warn("Wordlist gagal dimuat!")
-    return
-end
-
-print("Wordlist Loaded:", #kataModule)
--- =========================
--- LOAD WRONG WORDLIST
--- =========================
-local wrongWordsSet = {}  -- untuk lookup cepat
 local function downloadWrongWordlist()
     local url = "https://raw.githubusercontent.com/fay23-dam/sazaraaax-script/refs/heads/main/wordworng/a3x.lua"
     local response = httpget(game, url)
     if not response then
-        warn("Gagal ambil wrong wordlist")
+        warn("Gagal download wrong wordlist")
         return false
     end
 
+    -- Formatnya langsung return { ... }
     local loadFunc, err = loadstring(response)
     if not loadFunc then
-        warn("Gagal parse wrong wordlist: " .. tostring(err))
+        warn("Gagal memparse wrong wordlist: " .. tostring(err))
         return false
     end
 
@@ -135,22 +126,25 @@ local function downloadWrongWordlist()
         return false
     end
 
-    -- Lowercase dan jadikan set
-    for _, w in ipairs(words) do
-        wrongWordsSet[string.lower(w)] = true
+    -- Masukkan ke set untuk pengecekan cepat
+    for _, word in ipairs(words) do
+        wrongWordsSet[string.lower(word)] = true
     end
+
+    print("Wrong words loaded:", #words)
     return true
 end
 
-local wrongOk = downloadWrongWordlist()
-if not wrongOk then
-    warn("Wrong wordlist gagal dimuat, melanjutkan tanpa filter")
-    wrongWordsSet = {}
-else
-    print("Wrong words loaded:", #wrongWordsSet)
+local wordOk = downloadWordlist()
+if not wordOk or #kataModule == 0 then
+    warn("Wordlist gagal dimuat!")
+    return
 end
+print("Wordlist Loaded:", #kataModule)
 
--- Indeks berdasarkan huruf pertama (dari kataModule)
+downloadWrongWordlist()  -- opsional, jika gagal set tetap kosong
+
+-- Indeks berdasarkan huruf pertama
 local wordsByFirstLetter = {}
 for _, word in ipairs(kataModule) do
     local first = string.sub(word, 1, 1)
@@ -244,7 +238,7 @@ local function resetUsedWords()
     end
 end
 
--- Fungsi pencarian kata dengan fallback panjang
+-- Fungsi pencarian kata dengan fallback panjang dan filter wrong word
 local function getSmartWords(prefix)
     if #prefix == 0 then return {} end
     local first = string.sub(prefix, 1, 1)
@@ -255,7 +249,7 @@ local function getSmartWords(prefix)
 
     for _, word in ipairs(candidates) do
         if string.sub(word, 1, #lowerPrefix) == lowerPrefix then
-            if not isUsed(word) then
+            if not isUsed(word) and not wrongWordsSet[word] then  -- tambah filter wrong word
                 local len = string.len(word)
                 -- simpan semua yang cocok prefix untuk fallback
                 table.insert(fallbackResults, word)
@@ -783,8 +777,8 @@ submitButton = SelectTab:CreateButton({
 -- TAB ABOUT
 -- =========================
 local AboutTab = Window:CreateTab("About")
-AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.3\nby sazaraaax\nFitur: Auto play, fallback panjang, deteksi salah kata, kirim ke Discord, auto retry saat diam\n\nthanks to danzzy1we for the indonesian dictionary" })
-AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Deteksi otomatis salah kata & coba ulang\n> Fallback panjang kata\n> Inactivity timeout (2 detik)\n> Kirim notifikasi Discord via webhook" })
+AboutTab:CreateParagraph({ Title = "Informasi Script", Content = "Auto Kata\nVersi: 3.4\nby sazaraaax\nFitur: Auto play, fallback panjang, deteksi salah kata, filter wrong word, kirim ke Discord, auto retry saat diam\n\nthanks to danzzy1we for the indonesian dictionary" })
+AboutTab:CreateParagraph({ Title = "Informasi Update", Content = "> Deteksi otomatis salah kata & coba ulang\n> Fallback panjang kata\n> Filter kata salah dari wordlist eksternal\n> Inactivity timeout (2 detik)\n> Kirim notifikasi Discord via webhook" })
 AboutTab:CreateParagraph({ Title = "Cara Penggunaan", Content = "1. Aktifkan toggle Auto\n2. Atur delay, agresivitas, dan panjang kata\n3. Mulai permainan\n4. Script akan otomatis menjawab" })
 AboutTab:CreateParagraph({ Title = "Catatan", Content = "Pastikan koneksi stabil\nJika ada error, coba reload" })
 
@@ -952,8 +946,7 @@ RunService.Heartbeat:Connect(function()
         local text = myBillboard.TextLabel.Text
         if not isMyTurn then
             isMyTurn = true
-            lastTurnActivity = tick()  -- reset inactivity timer
-            print("✅ Deteksi giliran sendiri: isMyTurn = true")
+            lastTurnActivity = tick()
             if serverLetter == "" and #text > 0 then
                 serverLetter = string.sub(text, 1, 1)
                 print("📝 serverLetter diambil dari billboard:", serverLetter)
@@ -973,7 +966,6 @@ RunService.Heartbeat:Connect(function()
     else
         if isMyTurn then
             isMyTurn = false
-            print("❌ Deteksi giliran sendiri: isMyTurn = false")
             updateMainStatus()
             updateWordButtons()
         end
@@ -982,7 +974,6 @@ RunService.Heartbeat:Connect(function()
     -- Inactivity check: jika giliran sendiri, auto aktif, dan sudah > INACTIVITY_TIMEOUT detik sejak aktivitas terakhir, coba auto lagi
     if matchActive and isMyTurn and autoEnabled and not autoRunning then
         if tick() - lastTurnActivity > INACTIVITY_TIMEOUT then
-            print("⏰ Inactivity timeout, mencoba auto lagi")
             lastTurnActivity = tick()  -- reset untuk menghindari loop
             startUltraAI()
         end
