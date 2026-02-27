@@ -29103,6 +29103,7 @@ return {
   "uri",
   "urian",
   "uribang",
+  "uforia",
   "urik",
   "urinalisis",
   "urine",
