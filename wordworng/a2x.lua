@@ -29930,5 +29930,5 @@ return {
   "zulu",
   "zurafah",
   "zuriah",
-  "zus",
+  "zus", "bordeaux", "lex", "Nmax","sphinx", "unisex", "bodrex", "komix", "gallierex", "addax", "aframax", "apterix", "bombyx", "caloperdrix", "caranx", "caronx", "chalcococyx", "chx", "cimex", "circumfix", "coix", "confix", "cyathocalyx", "donax", "echinosorex", "forex", "helix", "hystrix", "ilex", "index", "lux", "marx", "max", "melanoperdix", "meritrix", "microhierax", "molitrix", "murex", "mystax", "naiasptatrix", "natrix", "nephotettix", "nephottotix", "ninox", "nontax", "nothopanax", "nycticorax", "offax", "olfax", "ex", "prix", "annex", "croix", "deux", "complex", "ix", "hapax", "rex", "klux", "mantoux", "box", "vox"
 };
