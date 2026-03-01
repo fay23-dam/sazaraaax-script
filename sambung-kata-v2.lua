@@ -1136,13 +1136,13 @@ local AboutTab = Window:Tab({
 
 AboutTab:Paragraph({
     Title = "Informasi Script",
-    Desc = "Auto Kata (Optimized)\nVersi: 6.1 (Select Word dihapus)\nby sazaraaax & danz\nFitur: Auto play, SimpleSpy, save/load config",
+    Desc = "Auto Kata (Optimized)\nVersi: 4.1 (Select Word dihapus)\nby sazaraaax & danz\nFitur: Auto play, SimpleSpy, save/load config",
     Color = "Blue",
 })
 
 AboutTab:Paragraph({
     Title = "Informasi Update",
-    Desc = "> Slider aggression & panjang kata dihapus\n> Selalu memilih kata terbaik/terpanjang\n> Cache otomatis\n> Delay awal 2.5-3.7 detik",
+    Desc = "> Slider aggression & panjang kata dihapus\n> Selalu memilih kata terbaik\n> Cache otomatis\n> Delay awal 2.5-3.7 detik\n> add compe mode\n> delete tab select word",
 })
 
 AboutTab:Paragraph({
