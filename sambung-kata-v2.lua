@@ -995,6 +995,7 @@ local function updateConfigDisplay()
         "MinDelay: "..config.minDelay..
         " | MaxDelay: "..config.maxDelay..
         "\nAuto: "..tostring(autoEnabled)..
+        " | "
     )
 end
 updateConfigDisplay()
