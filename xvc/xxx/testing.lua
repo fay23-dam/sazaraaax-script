@@ -1,39 +1,89 @@
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TapButton = Instance.new("TextButton")
+local DropButton = Instance.new("TextButton") -- Tombol Baru
+local Title = Instance.new("TextLabel")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+-- === SETUP UI ===
+-- Menggunakan CoreGui agar UI tidak hilang saat reset (jika executor mendukung)
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Name = "InteractControlPanel"
 
--- Hapus GUI lama kalau ada
-local oldGui = playerGui:FindFirstChild("AndroidTouchTest")
-if oldGui then
-	oldGui:Destroy()
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Frame.Position = UDim2.new(0.5, -110, 0.1, 0)
+Frame.Size = UDim2.new(0, 220, 0, 160) -- Tinggi tetap 160
+Frame.Active = true
+Frame.Draggable = true 
+
+Title.Parent = Frame
+Title.Text = "CONTROL PANEL"
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+
+-- Tombol 1: INTERACT (TAP)
+TapButton.Name = "TapButton"
+TapButton.Parent = Frame
+TapButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Hijau
+TapButton.Position = UDim2.new(0, 10, 0, 40)
+TapButton.Size = UDim2.new(1, -20, 0, 50)
+TapButton.Text = "FORCE INTERACT (TAP)"
+TapButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+TapButton.TextScaled = true
+
+-- Tombol 2: DROP ITEM (BARU)
+DropButton.Name = "DropButton"
+DropButton.Parent = Frame
+DropButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0) -- Oranye/Coklat
+DropButton.Position = UDim2.new(0, 10, 0, 100)
+DropButton.Size = UDim2.new(1, -20, 0, 50)
+DropButton.Text = "FORCE DROP ITEM"
+DropButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+DropButton.TextScaled = true
+
+-- === FUNGSI SIMULASI SENTUHAN ===
+local vim = game:GetService("VirtualInputManager")
+
+local function simulateTouch(targetInstance, buttonLabel, originalText)
+    if not targetInstance then 
+        warn("Target UI tidak ditemukan!")
+        return 
+    end
+
+    -- Hitung posisi tengah tombol berdasarkan koordinat layar (AbsolutePosition)
+    local x = targetInstance.AbsolutePosition.X + (targetInstance.AbsoluteSize.X / 2)
+    local y = targetInstance.AbsolutePosition.Y + (targetInstance.AbsoluteSize.Y / 2) + 58 -- Offset Topbar Roblox
+    
+    local touchId = os.time()
+    
+    -- Kirim sinyal touch (Began -> Ended)
+    vim:SendTouchEvent(touchId, 0, x, y) 
+    task.wait(0.05)
+    vim:SendTouchEvent(touchId, 2, x, y)
+    
+    -- Feedback visual pada tombol panel
+    buttonLabel.Text = "SUCCESS!"
+    task.wait(0.5)
+    buttonLabel.Text = originalText
 end
 
--- ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AndroidTouchTest"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+-- === LOGIKA TOMBOL ===
 
--- Target yang akan disentuh berdasarkan posisi
-local target = Instance.new("TextButton")
-target.Name = "Target"
-target.Size = UDim2.new(0, 220, 0, 90)
-target.Position = UDim2.new(0.5, -110, 0.35, 0)
-target.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
-target.TextColor3 = Color3.new(1, 1, 1)
-target.TextScaled = true
-target.Text = "TARGET"
-target.Parent = screenGui
+-- Klik untuk Interact
+TapButton.MouseButton1Click:Connect(function()
+    local interactPath = game:GetService("Players").LocalPlayer.PlayerGui.Touch.Right.InteractButton
+    simulateTouch(interactPath, TapButton, "FORCE INTERACT (TAP)")
+end)
 
--- Tombol untuk memicu simulasi tap
-local tapButton = Instance.new("TextButton")
-tapButton.Name = "TapButton"
-tapButton.Size = UDim2.new(0, 220, 0, 70)
-tapButton.Position = UDim2.new(0.5, -110, 0.7, 0)
-tapButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-tapButton.TextColor3 = Color3.new(1, 1, 1)
+-- Klik untuk Drop
+DropButton.MouseButton1Click:Connect(function()
+    -- Path sesuai permintaan: PlayerGui.Touch.Right.DropButton.Icon
+    -- Kita ambil DropButton-nya untuk mendapatkan posisi koordinat klik
+    local dropPath = game:GetService("Players").LocalPlayer.PlayerGui.Touch.Right.DropButton
+    simulateTouch(dropPath, DropButton, "FORCE DROP ITEM")
+end)
 tapButton.TextScaled = true
 tapButton.Text = "TAP TARGET"
 tapButton.Parent = screenGui
