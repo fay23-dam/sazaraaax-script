@@ -119,27 +119,49 @@ local function getCloseButton()
     -- Jika tidak ditemukan, return nil
     return nil
 end
+-- Helper: simulate a tap at the center of a GUI button
+local function tapButton(button)
+    if not button or not button:IsA("GuiButton") then return false end
+    -- Wait a frame to ensure layout is updated (AbsolutePosition may be 0,0 if not yet rendered)
+    task.wait(0.05)
+    local pos = button.AbsolutePosition
+    local size = button.AbsoluteSize
+    if pos.X == 0 and pos.Y == 0 then
+        -- Button might not be visible yet, try again after a short delay
+        task.wait(0.1)
+        pos = button.AbsolutePosition
+        size = button.AbsoluteSize
+    end
+    if pos.X == 0 and pos.Y == 0 then return false end
+    local x = pos.X + size.X / 2
+    local y = pos.Y + size.Y / 2
+    VirtualInputManager:SendTouchEvent(1, x, y, true, game)
+    task.wait(0.05)
+    VirtualInputManager:SendTouchEvent(1, x, y, false, game)
+    return true
+end
 
+-- Updated functions using tapButton
 local function interactWithPart(part)
     if not part then return false end
 
     if isMobile then
-        -- Gunakan tombol interaksi GUI
+        -- Try to find the interact button
         local interactButton = getInteractButton()
         if interactButton and interactButton:IsA("GuiButton") then
-            interactButton.Activated:Fire()   -- Fixed: dot instead of colon
-            return true
-        else
-            -- Fallback: simulasi sentuhan di posisi layar part
-            local screenPos, onScreen = camera:WorldToScreenPoint(part.Position)
-            if not onScreen then return false end
-            VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, true, game)
-            task.wait(0.05)
-            VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, false, game)
-            return true
+            if tapButton(interactButton) then
+                return true
+            end
         end
+        -- Fallback: simulate a touch at the part's screen position
+        local screenPos, onScreen = camera:WorldToScreenPoint(part.Position)
+        if not onScreen then return false end
+        VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, true, game)
+        task.wait(0.05)
+        VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, false, game)
+        return true
     else
-        -- PC: tekan E
+        -- PC: press E
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
         task.wait(0.05)
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -149,12 +171,9 @@ end
 
 local function pressG()
     if isMobile then
-        -- Cari tombol "Close" atau yang setara
         local closeButton = getCloseButton()
         if closeButton and closeButton:IsA("GuiButton") then
-            closeButton.Activated:Fire()   -- Fixed: dot instead of colon
-        else
-            -- Jika tidak ada, skip (tidak perlu pressG)
+            tapButton(closeButton)
         end
     else
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.G, false, game)
@@ -166,11 +185,10 @@ local function useBatInSlot(slotNumber)
     if isMobile then
         local slotButton = getSlotButton(slotNumber)
         if slotButton and slotButton:IsA("GuiButton") then
-            slotButton.Activated:Fire()   -- Fixed: use dot to access event, then colon to call Fire
+            tapButton(slotButton)
             return true
         end
     else
-        -- PC: tekan tombol angka
         local key = Enum.KeyCode.One
         if slotNumber == 2 then key = Enum.KeyCode.Two
         elseif slotNumber == 3 then key = Enum.KeyCode.Three
