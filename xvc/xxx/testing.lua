@@ -42,7 +42,7 @@ local originalQuality = nil
 -- SETTINGS
 local settings = {
     delayMode = "normal",
-    skipList = {},        -- berisi nama item yang akan dilewati
+    skipList = {},
     itemFilter = {},
     waypoints = {},
 }
@@ -75,18 +75,71 @@ local function addLog(text, color)
     if #logEntries > 100 then table.remove(logEntries, 1) end
 end
 
--- INTERAKSI UNTUK MOBILE / PC
+-- ============================================================
+-- INTERAKSI UNTUK MOBILE / PC (diperbaiki)
+-- ============================================================
+
+-- Cari tombol interaksi (dari PlayerGui.Interactable.Main.Frame.Touch)
+local function getInteractButton()
+    if playerGui:FindFirstChild("Interactable") then
+        local main = playerGui.Interactable:FindFirstChild("Main")
+        if main then
+            local frame = main:FindFirstChild("Frame")
+            if frame then
+                return frame:FindFirstChild("Touch")
+            end
+        end
+    end
+    return nil
+end
+
+-- Cari tombol slot (dari PlayerGui.Main.HomePage.Bottom)
+local function getSlotButton(slotNumber)
+    if playerGui:FindFirstChild("Main") then
+        local home = playerGui.Main:FindFirstChild("HomePage")
+        if home then
+            local bottom = home:FindFirstChild("Bottom")
+            if bottom then
+                return bottom:FindFirstChild(tostring(slotNumber))
+            end
+        end
+    end
+    return nil
+end
+
+-- Cari tombol "Close" untuk pressG (jika ada)
+local function getCloseButton()
+    -- Coba cari tombol dengan teks "Close" atau nama tertentu
+    -- Anda bisa menyesuaikan dengan struktur GUI game
+    if playerGui:FindFirstChild("Main") and playerGui.Main:FindFirstChild("HomePage") then
+        -- contoh: mungkin ada tombol "Close" di dalam HomePage
+        local closeBtn = playerGui.Main.HomePage:FindFirstChild("Close")
+        if closeBtn and closeBtn:IsA("GuiButton") then return closeBtn end
+    end
+    -- Jika tidak ditemukan, return nil
+    return nil
+end
+
 local function interactWithPart(part)
     if not part then return false end
+
     if isMobile then
-        -- Coba dapatkan posisi layar
-        local screenPos, onScreen = camera:WorldToScreenPoint(part.Position)
-        if not onScreen then return false end
-        VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, true, game)
-        task.wait(0.05)
-        VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, false, game)
-        return true
+        -- Gunakan tombol interaksi GUI
+        local interactButton = getInteractButton()
+        if interactButton and interactButton:IsA("GuiButton") then
+            interactButton.Activated:Fire()   -- Fixed: dot instead of colon
+            return true
+        else
+            -- Fallback: simulasi sentuhan di posisi layar part
+            local screenPos, onScreen = camera:WorldToScreenPoint(part.Position)
+            if not onScreen then return false end
+            VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, true, game)
+            task.wait(0.05)
+            VirtualInputManager:SendTouchEvent(1, screenPos.X, screenPos.Y, false, game)
+            return true
+        end
     else
+        -- PC: tekan E
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
         task.wait(0.05)
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -94,18 +147,40 @@ local function interactWithPart(part)
     end
 end
 
--- Fungsi untuk pressG (jika dibutuhkan) – untuk mobile kita coba tap pada area peta atau abaikan
 local function pressG()
     if isMobile then
-        -- Jika tidak ada area spesifik, mungkin bisa diabaikan atau kita tap di posisi tertentu
-        -- Di sini kita lewati karena tidak jelas fungsinya
-        return
+        -- Cari tombol "Close" atau yang setara
+        local closeButton = getCloseButton()
+        if closeButton and closeButton:IsA("GuiButton") then
+            closeButton.Activated:Fire()   -- Fixed: dot instead of colon
+        else
+            -- Jika tidak ada, skip (tidak perlu pressG)
+        end
     else
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.G, false, game)
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.G, false, game)
     end
 end
 
+local function useBatInSlot(slotNumber)
+    if isMobile then
+        local slotButton = getSlotButton(slotNumber)
+        if slotButton and slotButton:IsA("GuiButton") then
+            slotButton.Activated:Fire()   -- Fixed: use dot to access event, then colon to call Fire
+            return true
+        end
+    else
+        -- PC: tekan tombol angka
+        local key = Enum.KeyCode.One
+        if slotNumber == 2 then key = Enum.KeyCode.Two
+        elseif slotNumber == 3 then key = Enum.KeyCode.Three
+        elseif slotNumber == 4 then key = Enum.KeyCode.Four end
+        VirtualInputManager:SendKeyEvent(true, key, false, game)
+        VirtualInputManager:SendKeyEvent(false, key, false, game)
+        return true
+    end
+    return false
+end
 -- ANTI VOID / NOCLIP
 RunService.Stepped:Connect(function()
     if noclipEnabled and character then
@@ -163,11 +238,10 @@ local MINI_H = MINI_HEIGHT * scaleFactor
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, WIDTH, 0, FULL_H)
-mainFrame.Position = UDim2.new(0, 16, 0.5, -FULL_H / 2)
+mainFrame.Position = UDim2.new(1, -(WIDTH + 16), 0.5, -FULL_H / 2)
 mainFrame.BackgroundColor3 = Color3.fromRGB(13, 15, 17)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
--- Draggable dimatikan, akan diganti dengan drag header manual
 mainFrame.Draggable = false
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
@@ -681,18 +755,26 @@ local btnNPC, badgeNPC = makeBtn(sfFarm, "NPC: NONE", "// no active npc found", 
 -- ============================================================
 -- SKIP ITEMS SECTION (dari database)
 -- ============================================================
--- Database item dari kode kedua (v1)
-local v1 = {}  -- akan diisi di bagian akhir karena terlalu panjang, tapi kita bisa masukkan setelah ini
--- (Untuk keperluan kode ini, kita akan menempatkan database di akhir agar tidak mengganggu baca, tapi di sini kita asumsikan sudah ada)
--- Karena panjang, kita letakkan di bagian akhir file, setelah semua fungsi. Namun di sini kita akan sambung dengan pengambilan nama item unik.
+-- Database item dari kode kedua (v1) - hanya contoh, ganti dengan data lengkap
+local v1 = {}
+v1[101] = { name = "Cash", type = "Money" }
+v1[102] = { name = "Cash", type = "Money" }
+v1[201] = { name = "Golden Bar", type = "MoneyGoldBar" }
+v1[10001] = { name = "Tomato soup", type = "Food" }
+v1[10003] = { name = "Milk", type = "Food" }
+v1[10014] = { name = "Corn", type = "Food" }
+v1[10027] = { name = "Peppermint Candy", type = "Food" }
+v1[10035] = { name = "Gift Box", type = "Tool" }
 
--- Ambil daftar nama item unik dari database (akan diinisialisasi setelah v1 didefinisikan)
 local allItemNames = {}
--- Fungsi ini akan dipanggil setelah v1 didefinisikan
+for _, data in pairs(v1) do
+    if data.name then
+        allItemNames[data.name] = true
+    end
+end
 
--- Kita buat UI untuk skip items setelah v1 siap
+-- Fungsi untuk membangun UI skip items
 local function buildSkipItemsUI()
-    -- Bersihkan terlebih dahulu jika sudah ada
     for _, v in ipairs(sfFarm:GetChildren()) do
         if v.Name == "SkipListFrame" then v:Destroy() end
     end
@@ -726,7 +808,6 @@ local function buildSkipItemsUI()
         check.Size = UDim2.new(0, 20 * scaleFactor, 0, 20 * scaleFactor)
         check.Position = UDim2.new(0, 8 * scaleFactor, 0.5, -10 * scaleFactor)
         check.BackgroundTransparency = 1
-        -- Asset sementara, ganti dengan asset yang ada
         check.Image = "rbxassetid://6023426926" -- checklist
         check.ZIndex = 5
         check.Parent = row
@@ -786,7 +867,6 @@ local function buildSkipItemsUI()
         end)
     end
 
-    -- Urutkan nama item agar rapi
     local sortedNames = {}
     for name in pairs(allItemNames) do
         table.insert(sortedNames, name)
@@ -796,8 +876,7 @@ local function buildSkipItemsUI()
         addCheckboxRow(name)
     end
 end
-
--- Nanti setelah database v1 didefinisikan, panggil buildSkipItemsUI()
+buildSkipItemsUI()
 
 -- ============================================================
 -- CONFIG SETTINGS (Delay mode)
@@ -1542,7 +1621,6 @@ local function updateCachedItem(child)
     if lootUI and adornPart then
         local name = getItemName(lootUI)
         if name then
-            -- Cek apakah sudah ada di cache
             local found = false
             for i, v in ipairs(cachedLootItems) do
                 if v.item == child then
@@ -1557,7 +1635,6 @@ local function updateCachedItem(child)
             end
         end
     else
-        -- Bukan loot, hapus dari cache
         for i, v in ipairs(cachedLootItems) do
             if v.item == child then
                 table.remove(cachedLootItems, i)
@@ -1567,11 +1644,9 @@ local function updateCachedItem(child)
     end
 end
 
--- Hook ke perubahan WorldFolder
 WorldFolder.DescendantAdded:Connect(function(desc)
     task.defer(function()
         updateCachedItem(desc)
-        -- Untuk ESP
         local lootUI, adornPart = findLootData(desc)
         if lootUI and adornPart then
             local name = getItemName(lootUI)
@@ -1779,7 +1854,7 @@ local function runOpenModels()
             continue
         end
 
-        interactWithPart(interactable)  -- Ganti pressE dengan interaksi touch/klik
+        interactWithPart(interactable)
         local d = DELAYS[settings.delayMode]
         task.wait(d.afterE)
 
@@ -1808,14 +1883,12 @@ local function runCollectLoots()
     TweenService:Create(strokeCollect, TweenInfo.new(0.2), {Color = Color3.fromRGB(80, 160, 230), Transparency = 0.5}):Play()
     addLog("auto collect started", Color3.fromRGB(80, 160, 230))
 
-    -- Gunakan cachedLootItems yang sudah diperbarui secara dinamis
     for i, loot in ipairs(cachedLootItems) do
         if not isCollectingActive then break end
         if not loot.item.Parent then continue end
         if not loot.adornPart or not loot.adornPart.Parent then continue end
         if isItemOnBase(loot.adornPart) then continue end
 
-        -- Filter jika ada
         if #settings.itemFilter > 0 then
             local allowed = false
             for _, filterName in ipairs(settings.itemFilter) do
@@ -1830,7 +1903,6 @@ local function runCollectLoots()
             end
         end
 
-        -- Skip list
         local shouldSkip = false
         for _, skipName in ipairs(settings.skipList) do
             if loot.name:lower():find(skipName:lower()) then
@@ -1852,7 +1924,7 @@ local function runCollectLoots()
         local d = DELAYS[settings.delayMode]
         task.wait(d.tp)
         lookAt(loot.adornPart)
-        interactWithPart(loot.adornPart)  -- Ganti pressE
+        interactWithPart(loot.adornPart)
         task.wait(d.afterE)
         stopFly()
 
@@ -1875,29 +1947,8 @@ local function runCollectLoots()
 end
 
 -- ============================================================
--- AUTO MONSTER
+-- AUTO MONSTER (mobile-compatible)
 -- ============================================================
-local function useBatInSlot(slotNumber)
-    local bottom = player.PlayerGui:FindFirstChild("Main") and player.PlayerGui.Main:FindFirstChild("HomePage") and player.PlayerGui.Main.HomePage:FindFirstChild("Bottom")
-    if not bottom then return false end
-    local slot = bottom:FindFirstChild(tostring(slotNumber))
-    if not slot then return false end
-    local itemDetails = slot:FindFirstChild("ItemDetails")
-    if not itemDetails then return false end
-    local itemName = itemDetails:FindFirstChild("ItemName")
-    if not itemName then return false end
-    if string.lower(itemName.Text):find("bat") then
-        local key = Enum.KeyCode.One
-        if slotNumber == 2 then key = Enum.KeyCode.Two
-        elseif slotNumber == 3 then key = Enum.KeyCode.Three
-        elseif slotNumber == 4 then key = Enum.KeyCode.Four end
-        VirtualInputManager:SendKeyEvent(true, key, false, game)
-        VirtualInputManager:SendKeyEvent(false, key, false, game)
-        return true
-    end
-    return false
-end
-
 local function getNearestMonster()
     local monsters = workspace:FindFirstChild("GameSystem") and workspace.GameSystem:FindFirstChild("Monsters")
     if not monsters then return nil end
@@ -1953,10 +2004,21 @@ local function runAutoMonster()
         local d = DELAYS[settings.delayMode]
         task.wait(d.tp)
 
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        if isMobile then
+            -- On mobile, use the bat button again to swing (or tap the monster)
+            -- Assuming the bat is in slot 1 (or the slot we used earlier)
+            for slot = 1, 4 do
+                if useBatInSlot(slot) then
+                    break
+                end
+            end
+        else
+            -- PC: simulate left mouse click
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end
         task.wait(0.2)
-
+        stopFly()
         task.wait(0.5)
     end
 
@@ -2070,7 +2132,7 @@ btnNPC.MouseButton1Click:Connect(function()
     anchorTP(CFrame.new(interactable.Position + Vector3.new(0, 3, 0)))
     lookAt(interactable)
     task.wait(0.1)
-    interactWithPart(interactable) -- ganti pressE
+    interactWithPart(interactable)
     setStatus("npc interact done!", Color3.fromRGB(255, 126, 179))
     addLog("interacted with npc: " .. npc.Name, Color3.fromRGB(255, 126, 179))
 end)
@@ -2105,36 +2167,6 @@ RunService.Heartbeat:Connect(function()
         lastLogCount = #logEntries
     end
 end)
-
--- ============================================================
--- DATABASE ITEM (v1) – dimasukkan di sini karena panjang
--- ============================================================
--- (Di sini Anda harus menyalin seluruh definisi v1 dari kode kedua)
--- Karena terlalu panjang, saya akan menempatkan placeholder. Dalam implementasi nyata, salin semua data dari kode kedua.
--- Contoh awal:
-local v1 = {}
--- ... (isi database item dari kode kedua) ...
--- Karena ini contoh, kita isi minimal agar kode bisa jalan. Untuk kode asli, ganti dengan database lengkap.
-
--- Untuk keperluan demo, kita isi dengan beberapa item contoh
-v1[101] = { name = "Cash", type = "Money" }
-v1[102] = { name = "Cash", type = "Money" }
-v1[201] = { name = "Golden Bar", type = "MoneyGoldBar" }
-v1[10001] = { name = "Tomato soup", type = "Food" }
-v1[10003] = { name = "Milk", type = "Food" }
-v1[10014] = { name = "Corn", type = "Food" }
-v1[10027] = { name = "Peppermint Candy", type = "Food" }
-v1[10035] = { name = "Gift Box", type = "Tool" }
-
--- Kumpulkan nama item unik
-for _, data in pairs(v1) do
-    if data.name then
-        allItemNames[data.name] = true
-    end
-end
-
--- Bangun UI skip items setelah v1 siap
-buildSkipItemsUI()
 
 -- ENTRANCE
 switchTab("farm")
