@@ -54,7 +54,7 @@ local espCategories = {
 }
 
 -- SETTINGS
-local settings = {
+local cfg = {
     delayMode = "normal",
     skipList = {},
     itemFilter = {},
@@ -116,7 +116,7 @@ end
 local function anchorTP(targetCFrame)
     startFly()
     humanoidRootPart.CFrame = targetCFrame
-    local d = DELAYS[settings.delayMode]
+    local d = DELAYS[cfg.delayMode]
     task.wait(d.tp)
     stopFly()
 end
@@ -128,7 +128,7 @@ local function lookAt(targetPart)
     humanoidRootPart.CFrame = CFrame.new(origin, origin + direction)
     camera.CameraType = Enum.CameraType.Scriptable
     camera.CFrame = CFrame.new(origin + Vector3.new(0, 2, 0), target)
-    local d = DELAYS[settings.delayMode]
+    local d = DELAYS[cfg.delayMode]
     task.wait(d.look)
     camera.CameraType = Enum.CameraType.Custom
 end
@@ -141,7 +141,7 @@ local function hasHighlight(model)
 end
 
 local function waitForHighlight(model)
-    local d = DELAYS[settings.delayMode]
+    local d = DELAYS[cfg.delayMode]
     local elapsed = 0
     while elapsed < d.highlight do
         if hasHighlight(model) then return true end
@@ -969,7 +969,7 @@ local function buildSkipItemsUI()
         nameLbl.Parent = row
 
         local checkboxState = false
-        for _, skip in ipairs(settings.skipList) do
+        for _, skip in ipairs(cfg.skipList) do
             if string.lower(skip) == string.lower(itemName) then
                 checkboxState = true; break
             end
@@ -997,11 +997,11 @@ local function buildSkipItemsUI()
             checkboxState = not checkboxState
             updateCheckboxImage()
             if checkboxState then
-                table.insert(settings.skipList, itemName)
+                table.insert(cfg.skipList, itemName)
             else
-                for j, val in ipairs(settings.skipList) do
+                for j, val in ipairs(cfg.skipList) do
                     if string.lower(val) == string.lower(itemName) then
-                        table.remove(settings.skipList, j); break
+                        table.remove(cfg.skipList, j); break
                     end
                 end
             end
@@ -1062,7 +1062,7 @@ end
 
 local function updateDelayBtns()
     for mode, btn in pairs(delayBtns) do
-        if mode == settings.delayMode then
+        if mode == cfg.delayMode then
             TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(15, 42, 26), TextColor3 = Color3.fromRGB(52, 199, 109)}):Play()
         else
             TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(28, 32, 36), TextColor3 = Color3.fromRGB(95, 108, 102)}):Play()
@@ -1073,7 +1073,7 @@ end
 updateDelayBtns()
 for mode, btn in pairs(delayBtns) do
     btn.MouseButton1Click:Connect(function()
-        settings.delayMode = mode
+        cfg.delayMode = mode
         updateDelayBtns()
         addLog("delay mode set to: " .. mode, Color3.fromRGB(52, 199, 109))
     end)
@@ -1553,8 +1553,8 @@ local function refreshWaypoints()
     for _, v in ipairs(wpListFrame:GetChildren()) do
         if v:IsA("Frame") then v:Destroy() end
     end
-    wpEmptyLbl.Visible = #settings.waypoints == 0
-    for i, wp in ipairs(settings.waypoints) do
+    wpEmptyLbl.Visible = #cfg.waypoints == 0
+    for i, wp in ipairs(cfg.waypoints) do
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 38 * scaleFactor)
         row.BackgroundColor3 = Color3.fromRGB(20, 22, 24)
@@ -1624,7 +1624,7 @@ local function refreshWaypoints()
 
         local idx = i
         delBtn.MouseButton1Click:Connect(function()
-            table.remove(settings.waypoints, idx)
+            table.remove(cfg.waypoints, idx)
             refreshWaypoints()
             addLog("removed waypoint: " .. wp.name, Color3.fromRGB(220, 60, 60))
         end)
@@ -1634,7 +1634,7 @@ end
 wpSaveBtn.MouseButton1Click:Connect(function()
     local name = wpInput.Text
     if name ~= "" and humanoidRootPart then
-        table.insert(settings.waypoints, { name = name, cframe = humanoidRootPart.CFrame })
+        table.insert(cfg.waypoints, { name = name, cframe = humanoidRootPart.CFrame })
         wpInput.Text = ""
         refreshWaypoints()
         addLog("saved waypoint: " .. name, Color3.fromRGB(52, 199, 109))
@@ -2000,7 +2000,7 @@ local function runOpenModels()
         if not isOpeningActive then break end
 
         local shouldSkip = false
-        for _, skipName in ipairs(settings.skipList) do
+        for _, skipName in ipairs(cfg.skipList) do
             if model.Name:lower():find(skipName:lower()) then
                 shouldSkip = true; break
             end
@@ -2032,7 +2032,7 @@ local function runOpenModels()
         end
 
         interactWithPart(interactable)  -- tekan E
-        local d = DELAYS[settings.delayMode]
+        local d = DELAYS[cfg.delayMode]
         task.wait(d.afterE)
 
         totalOpened = totalOpened + 1
@@ -2056,7 +2056,7 @@ local function returnToBase()
     setStatus("returning to base...", Color3.fromRGB(255, 185, 55))
     anchorTP(BasePart.CFrame + Vector3.new(0, 4, 0))
     dropItem()  -- tekan G
-    local d = DELAYS[settings.delayMode]
+    local d = DELAYS[cfg.delayMode]
     task.wait(d.base)
 end
 
@@ -2089,9 +2089,9 @@ local function runCollectLoots()
             goto continue
         end
 
-        if #settings.itemFilter > 0 then
+        if #cfg.itemFilter > 0 then
             local allowed = false
-            for _, filterName in ipairs(settings.itemFilter) do
+            for _, filterName in ipairs(cfg.itemFilter) do
                 if loot.name:lower():find(filterName:lower()) then allowed = true; break end
             end
             if not allowed then
@@ -2101,7 +2101,7 @@ local function runCollectLoots()
         end
 
         local shouldSkip = false
-        for _, skipName in ipairs(settings.skipList) do
+        for _, skipName in ipairs(cfg.skipList) do
             if loot.name:lower():find(skipName:lower()) then shouldSkip = true; break end
         end
         if shouldSkip then
@@ -2115,7 +2115,7 @@ local function runCollectLoots()
 
         startFly()
         humanoidRootPart.CFrame = CFrame.new(loot.adornPart.Position + Vector3.new(0, 3, 0))
-        local d = DELAYS[settings.delayMode]
+        local d = DELAYS[cfg.delayMode]
         task.wait(d.tp)
 
         lookAt(loot.adornPart)
@@ -2193,7 +2193,7 @@ local function runAutoMonster()
         setStatus("attacking monster: " .. monster.model.Name, Color3.fromRGB(255, 80, 120))
         startFly()
         humanoidRootPart.CFrame = CFrame.new(monster.head.Position + Vector3.new(0, 5, 0))
-        local d = DELAYS[settings.delayMode]
+        local d = DELAYS[cfg.delayMode]
         task.wait(d.tp)
 
         -- Left click mouse untuk serangan
