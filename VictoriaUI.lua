@@ -507,8 +507,15 @@ function VictoriaUI:MakeWindow(Settings)
             function Elements:AddParagraph(Title, Text)
                 local Card = MakeCard(60)
                 Create("TextLabel", { Size = UDim2.new(1, -20, 0, 20), Position = UDim2.new(0, 10, 0, 5), BackgroundTransparency = 1, Text = Title, TextColor3 = Theme.Text, Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left }).Parent = Card
-                Create("TextLabel", { Size = UDim2.new(1, -20, 0, 30), Position = UDim2.new(0, 10, 0, 25), BackgroundTransparency = 1, Text = Text, TextColor3 = Color3.fromRGB(150, 150, 160), Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }).Parent = Card
+                local TextObj = Create("TextLabel", { Size = UDim2.new(1, -20, 0, 30), Position = UDim2.new(0, 10, 0, 25), BackgroundTransparency = 1, Text = Text, TextColor3 = Color3.fromRGB(150, 150, 160), Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top })
+                TextObj.Parent = Card
                 Card.Parent = ParentFrame
+                
+                return {
+                    SetText = function(self, newText)
+                        TextObj.Text = newText
+                    end
+                }
             end
 
             function Elements:AddDivider() local c = Create("Frame", { Size = UDim2.new(1, -20, 0, 1), Position = UDim2.new(0, 10, 0, 0), BackgroundColor3 = Color3.fromRGB(40, 45, 55), BorderSizePixel = 0 }); c.Parent = ParentFrame; table.insert(TabObj.Items, c) end
