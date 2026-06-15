@@ -9,7 +9,7 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 
 local UI_NAME = "VictoriaUI_Fantasy"
-local FONT = Enum.Font.Fantasy
+local FONT = Font.new("rbxassetid://12187368843")
 
 -- ==========================
 -- THEMES
@@ -18,13 +18,13 @@ VictoriaUI.Themes = {
     Cyan = { 
         Accent1 = Color3.fromRGB(0, 210, 255), 
         Accent2 = Color3.fromRGB(255, 105, 180), 
-        Bg = Color3.fromRGB(15, 15, 20), 
-        Card = Color3.fromRGB(24, 24, 30), 
-        Text = Color3.fromRGB(255, 255, 255),
-        SubText = Color3.fromRGB(120, 120, 130),
-        Orange = Color3.fromRGB(255, 170, 0),
-        Green = Color3.fromRGB(50, 255, 50),
-        Red = Color3.fromRGB(255, 50, 50),
+        Bg = Color3.fromRGB(15, 15, 22), 
+        Card = Color3.fromRGB(20, 26, 32), 
+        Text = Color3.fromRGB(200, 215, 220),
+        SubText = Color3.fromRGB(90, 105, 100),
+        Orange = Color3.fromRGB(255, 185, 55),
+        Green = Color3.fromRGB(0, 255, 127),
+        Red = Color3.fromRGB(220, 60, 60),
         Purple = Color3.fromRGB(180, 50, 255)
     }
 }
@@ -39,7 +39,13 @@ end
 
 local function Create(className, properties, children)
     local instance = Instance.new(className)
-    for k, v in pairs(properties or {}) do instance[k] = v end
+    for k, v in pairs(properties or {}) do
+        if k == "Font" and typeof(v) == "Font" then
+            instance.FontFace = v
+        else
+            instance[k] = v
+        end
+    end
     for _, child in ipairs(children or {}) do child.Parent = instance end
     return instance
 end
@@ -144,8 +150,7 @@ function VictoriaUI:MakeWindow(Settings)
     MinimizeBtn.MouseButton1Click:Connect(function()
         local tPos = FloatingBtn.Position
         FloatingBtn.Visible = true
-        MakeTween(MainFrame, {0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In}, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(tPos.X.Scale, tPos.X.Offset+22, tPos.Y.Scale, tPos.Y.Offset+22) }).Completed:Wait()
-        MainFrame.Visible = false
+        MakeTween(MainFrame, {0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In}, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(tPos.X.Scale, tPos.X.Offset+22, tPos.Y.Scale, tPos.Y.Offset+22) }).Completed:Connect(function() MainFrame.Visible = false end)
     end)
     FloatingBtn.MouseButton1Click:Connect(function()
         if not fDrag then
@@ -269,6 +274,113 @@ function VictoriaUI:MakeWindow(Settings)
                     l.Parent = Box; Box.CanvasSize = UDim2.new(0, 0, 0, #Box:GetChildren() * 17)
                 end,
                 Clear = function(self) for _, c in ipairs(Box:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end Box.CanvasSize = UDim2.new(0,0,0,0) end
+            }
+        end
+        function Elements:AddButton(Config)
+            local Card = MakeCard(38)
+            local Btn = Create("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = string.upper(Config.Name), TextColor3 = Theme.Accent2, Font = FONT, TextSize = 16 })
+            Btn.Parent = Card; Card.Parent = ParentFrame
+            Btn.MouseButton1Click:Connect(function()
+                MakeTween(Card, {0.1}, { BackgroundColor3 = Color3.fromRGB(45, 45, 55) }); task.wait(0.1); MakeTween(Card, {0.1}, { BackgroundColor3 = Theme.Card })
+                if Config.Callback then Config.Callback() end
+            end)
+        end
+
+        function Elements:AddDropdown(Config)
+            local Card = MakeCard(44)
+            Card.ClipsDescendants = true
+            local Selected = Config.Default or "SELECT..."
+
+            Create("Frame", { Size = UDim2.new(0, 2, 0, 20), Position = UDim2.new(0, 10, 0, 12), BackgroundColor3 = Theme.Accent2 }).Parent = Card
+            Create("TextLabel", { Size = UDim2.new(0, 150, 0, 44), Position = UDim2.new(0, 18, 0, 0), BackgroundTransparency = 1, Text = string.upper(Config.Name), TextColor3 = Theme.Text, Font = FONT, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left }).Parent = Card
+            
+            local ValBtn = Create("TextButton", { Size = UDim2.new(0, 100, 0, 28), Position = UDim2.new(1, -110, 0, 8), BackgroundColor3 = Theme.Bg, TextColor3 = Theme.Accent2, Text = string.upper(Selected), Font = FONT, TextSize = 12 }, { Create("UICorner", { CornerRadius = UDim.new(0, 6) }) })
+            ValBtn.Parent = Card; Card.Parent = ParentFrame
+
+            local DropContainer = Create("ScrollingFrame", { Size = UDim2.new(1, -20, 0, 100), Position = UDim2.new(0, 10, 0, 50), BackgroundColor3 = Theme.Bg, BorderSizePixel = 0, ScrollBarThickness = 2, ScrollBarImageColor3 = Theme.Accent1 }, { Create("UIListLayout", { Padding = UDim.new(0, 2) }) })
+            DropContainer.Parent = Card
+
+            local open = false
+            ValBtn.MouseButton1Click:Connect(function()
+                open = not open; MakeTween(Card, {0.2}, { Size = UDim2.new(1, 0, 0, open and 160 or 44) })
+            end)
+
+            local function Refresh(self, opts)
+                for _, c in ipairs(DropContainer:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+                for _, opt in ipairs(opts) do
+                    local optBtn = Create("TextButton", { Size = UDim2.new(1, 0, 0, 25), BackgroundTransparency = 1, Text = string.upper(opt), TextColor3 = Theme.Text, Font = FONT, TextSize = 12 })
+                    optBtn.Parent = DropContainer
+                    optBtn.MouseButton1Click:Connect(function()
+                        Selected = opt; ValBtn.Text = string.upper(opt); open = false
+                        MakeTween(Card, {0.2}, { Size = UDim2.new(1, 0, 0, 44) })
+                        if Config.Callback then Config.Callback(opt) end
+                    end)
+                end
+                DropContainer.CanvasSize = UDim2.new(0, 0, 0, #opts * 27)
+            end
+            Refresh(nil, Config.Options)
+            return { Refresh = Refresh }
+        end
+
+        function Elements:AddSlider(Config)
+            local Card = MakeCard(54)
+            local State = Config.Default or Config.Min
+
+            Create("Frame", { Size = UDim2.new(0, 2, 0, 20), Position = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Theme.Accent1 }).Parent = Card
+            Create("TextLabel", { Size = UDim2.new(1, -80, 0, 20), Position = UDim2.new(0, 18, 0, 6), BackgroundTransparency = 1, Text = string.upper(Config.Name), TextColor3 = Theme.Text, Font = FONT, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left }).Parent = Card
+            local ValLbl = Create("TextLabel", { Size = UDim2.new(0, 40, 0, 20), Position = UDim2.new(1, -50, 0, 6), BackgroundTransparency = 1, Text = tostring(State), TextColor3 = Theme.Accent1, Font = FONT, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Right })
+            ValLbl.Parent = Card
+            
+            local BarBg = Create("Frame", { Size = UDim2.new(1, -20, 0, 8), Position = UDim2.new(0, 10, 0, 36), BackgroundColor3 = Theme.Bg }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+            BarBg.Parent = Card
+            local Fill = Create("Frame", { Size = UDim2.new((State - Config.Min)/(Config.Max - Config.Min), 0, 1, 0), BackgroundColor3 = Theme.Accent1 }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+            Fill.Parent = BarBg
+            local DragBtn = Create("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "" }); DragBtn.Parent = BarBg
+            Card.Parent = ParentFrame
+
+            local dragging = false
+            DragBtn.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end end)
+            UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local pct = math.clamp((input.Position.X - BarBg.AbsolutePosition.X) / BarBg.AbsoluteSize.X, 0, 1)
+                    local val = Config.Min + ((Config.Max - Config.Min) * pct)
+                    if Config.Increment then val = math.floor((val / Config.Increment) + 0.5) * Config.Increment end
+                    val = math.clamp(val, Config.Min, Config.Max)
+                    State = val
+                    Fill.Size = UDim2.new((val - Config.Min)/(Config.Max - Config.Min), 0, 1, 0)
+                    ValLbl.Text = tostring(val)
+                    if Config.Callback then Config.Callback(val) end
+                end
+            end)
+            if State then if Config.Callback then Config.Callback(State) end end
+        end
+
+        function Elements:AddDivider() Create("Frame", { Size = UDim2.new(1, -20, 0, 1), Position = UDim2.new(0, 10, 0, 0), BackgroundColor3 = Theme.Bg, BorderSizePixel = 0 }).Parent = ParentFrame end
+
+        function Elements:AddParagraph(Title, Text)
+            local lines = string.split(Text, "\n")
+            local h = #lines * 20 + 20
+            local Card = MakeCard(h)
+            
+            local TitleLbl = Create("TextLabel", { Size = UDim2.new(1, -20, 0, 20), Position = UDim2.new(0, 10, 0, 5), BackgroundTransparency = 1, Text = "• " .. string.upper(Title), TextColor3 = Theme.SubText, Font = FONT, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left })
+            TitleLbl.Parent = Card
+            
+            local formattedText = string.upper(Text)
+            if formattedText ~= "" then formattedText = "• " .. formattedText:gsub("\n", "\n• ") end
+            
+            local TextObj = Create("TextLabel", { Size = UDim2.new(1, -20, 1, -25), Position = UDim2.new(0, 10, 0, 25), BackgroundTransparency = 1, Text = formattedText, TextColor3 = Theme.Text, Font = FONT, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top })
+            TextObj.Parent = Card
+            Card.Parent = ParentFrame
+            
+            return {
+                SetText = function(self, newText)
+                    local ft = string.upper(newText)
+                    if ft ~= "" then ft = "• " .. ft:gsub("\n", "\n• ") end
+                    TextObj.Text = ft
+                    local nlines = #string.split(newText, "\n")
+                    Card.Size = UDim2.new(1, 0, 0, nlines * 20 + 20)
+                end
             }
         end
 
